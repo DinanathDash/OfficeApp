@@ -139,6 +139,10 @@ public class WordActivity extends AppCompatActivity {
     }
 
     private void processParagraph(XWPFParagraph paragraph, StringBuilder sb, boolean inTable) {
+        if (!inTable && paragraph.isPageBreak()) {
+            sb.append("</div><div class='page'>");
+        }
+
         sb.append("<p style='");
         
         // Alignment

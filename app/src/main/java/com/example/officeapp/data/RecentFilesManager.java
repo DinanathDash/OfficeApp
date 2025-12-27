@@ -36,6 +36,12 @@ public class RecentFilesManager {
         return files == null ? new ArrayList<>() : files;
     }
 
+    public void removeRecentFile(RecentFile file) {
+        List<RecentFile> files = getRecentFiles();
+        files.removeIf(f -> f.getUriString().equals(file.getUriString()));
+        saveRecentFiles(files);
+    }
+
     public void addRecentFile(RecentFile file) {
         List<RecentFile> files = getRecentFiles();
         // Remove if exists to move to top

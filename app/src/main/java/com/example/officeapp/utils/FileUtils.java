@@ -78,4 +78,79 @@ public class FileUtils {
         
         return tempFile;
     }
+    public static boolean deleteFile(Context context, Uri uri) {
+        try {
+            // Check if it's a file URI
+            if ("file".equals(uri.getScheme())) {
+                File file = new File(uri.getPath());
+                return file.delete();
+            } else if ("content".equals(uri.getScheme())) {
+                // Try DocumentsContract if applicable
+                try {
+                     if (android.provider.DocumentsContract.isDocumentUri(context, uri)) {
+                         return android.provider.DocumentsContract.deleteDocument(context.getContentResolver(), uri);
+                     }
+                } catch (Exception e) {
+                    // Fallthrough
+                }
+                
+                // Try ContentResolver
+                try {
+                    int rows = context.getContentResolver().delete(uri, null, null);
+                    return rows > 0;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static long getFileSize(Context context, Uri uri) {
+        long size = 0;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.SIZE);
+                    if(index >= 0) {
+                        size = cursor.getLong(index);
+                    }
+                }
+            } finally {
+                if(cursor != null) cursor.close();
+            }
+        } else if (uri.getScheme().equals("file")) {
+             File file = new File(uri.getPath());
+             if (file.exists()) {
+                 size = file.length();
+             }
+        }
+        return size;
+    }
+    public static int getFileIconResource(String extension) {
+        if (extension == null) return com.example.officeapp.R.drawable.ic_filter_other;
+        
+        String type = extension.toLowerCase();
+        switch (type) {
+            case "doc":
+            case "docx":
+                return com.example.officeapp.R.drawable.ic_filter_doc;
+            case "pdf":
+                return com.example.officeapp.R.drawable.ic_filter_pdf;
+            case "xls":
+            case "xlsx":
+                return com.example.officeapp.R.drawable.ic_filter_sheet;
+            case "ppt":
+            case "pptx":
+                return com.example.officeapp.R.drawable.ic_filter_presentation;
+            case "txt":
+                return com.example.officeapp.R.drawable.ic_filter_txt;
+            default:
+                return com.example.officeapp.R.drawable.ic_filter_other;
+        }
+    }
 }
