@@ -5,8 +5,27 @@
         <item name="android:fontFamily">@font/google_sans</item>
         <item name="colorSecondary">@color/primary_blue</item>
         <item name="colorAccent">@color/primary_blue</item>
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/primary_blue</item>
     </style>
 
     <style name="Theme.OfficeApp" parent="Base.Theme.OfficeApp" />
+
+    <style name="Theme.OfficeApp.Splash" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="colorPrimary">@color/primary_blue</item>
+    </style>
+
+    <!-- Theme for Document Viewers (Forced Light Mode) -->
+    <style name="Theme.OfficeApp.Viewer" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorPrimaryVariant">@color/dark_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/primary_blue</item>
+        <item name="android:windowLightStatusBar">false</item> 
+        <item name="colorSecondary">@color/primary_blue</item>
+        <item name="colorAccent">@color/primary_blue</item>
+        <item name="android:windowBackground">@color/bg_gray</item>
+    </style>
 </resources>

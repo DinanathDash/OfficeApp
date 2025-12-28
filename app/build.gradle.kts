@@ -32,6 +32,19 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
+
+    packaging {
+        resources {
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/license.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/notice.txt"
+            excludes += "META-INF/ASL2.0"
+        }
+    }
 }
 
 dependencies {
@@ -42,8 +55,12 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.gson)
     implementation(libs.poi)
-    implementation(libs.poi.ooxml)
+    implementation(libs.poi.ooxml) {
+        exclude(group = "org.apache.poi", module = "poi-ooxml-lite")
+    }
+    implementation(libs.poi.ooxml.full)
     implementation(libs.poi.scratchpad)
+    implementation("e-iceblue:spire.doc.android:11.6.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

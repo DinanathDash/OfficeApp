@@ -2,6 +2,7 @@ package com.example.officeapp;
 
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
+import android.view.ViewGroup;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
@@ -61,6 +62,18 @@ public class PdfActivity extends AppCompatActivity {
             pdfRenderer = new PdfRenderer(fileDescriptor);
             adapter = new PdfPageAdapter(pdfRenderer);
             recyclerView.setAdapter(adapter);
+
+            if (pdfRenderer.getPageCount() == 1) {
+                // If single page, center vertically (WRAP_CONTENT in a constrained layout centers if constraints are set)
+                // ConstraintLayout centers the view if it is wrap_content and constraints are Top/Bottom of parent
+                ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                recyclerView.setLayoutParams(params);
+            } else {
+                 ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+                params.height = ViewGroup.LayoutParams.MATCH_PARENT; // Or 0dp (match_constraint) depending on setup
+                recyclerView.setLayoutParams(params);
+            }
         }
     }
 

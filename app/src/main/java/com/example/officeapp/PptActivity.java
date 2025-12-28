@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -99,6 +100,16 @@ public class PptActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 if(getSupportActionBar() != null) {
                     getSupportActionBar().setSubtitle(slides.size() + " Slides");
+                }
+                
+                if (slides.size() == 1) {
+                    ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    recyclerView.setLayoutParams(params);
+                } else {
+                     ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+                    params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                    recyclerView.setLayoutParams(params);
                 }
             });
         });

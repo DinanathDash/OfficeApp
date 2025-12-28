@@ -153,4 +153,32 @@ public class FileUtils {
                 return com.example.officeapp.R.drawable.ic_filter_other;
         }
     }
+
+    public static boolean doesFileExist(Context context, Uri uri) {
+        if ("file".equals(uri.getScheme())) {
+            File file = new File(uri.getPath());
+            return file.exists();
+        } else if ("content".equals(uri.getScheme())) {
+            try (Cursor cursor = context.getContentResolver().query(uri, 
+                    new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                return cursor != null && cursor.getCount() > 0;
+            } catch (Exception e) {
+                // SecurityException or other issues -> assume not accessible/doesn't exist
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public static String getMimeType(Context context, Uri uri) {
+        String mimeType = null;
+        if (android.content.ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            android.content.ContentResolver cr = context.getContentResolver();
+            mimeType = cr.getType(uri);
+        } else {
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
+        }
+        return mimeType;
+    }
 }

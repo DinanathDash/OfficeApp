@@ -66,6 +66,7 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_search_bar"
+                android:baselineAligned="false"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp">
@@ -73,11 +74,13 @@
                 <EditText
                     android:id="@+id/etSearch"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@null"
+                    android:gravity="center_vertical"
                     android:hint="Search file.."
                     android:imeOptions="actionDone"
+                    android:includeFontPadding="false"
                     android:inputType="text"
                     android:textCursorDrawable="@drawable/cursor_search"
                     android:textColor="@color/text_primary"
@@ -109,8 +112,9 @@
 
                 <ImageView
                     android:id="@+id/ivRecentFilesMore"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:padding="4dp"
                     android:src="@drawable/ic_more_vert"
                     app:tint="@color/text_secondary" />
             </LinearLayout>

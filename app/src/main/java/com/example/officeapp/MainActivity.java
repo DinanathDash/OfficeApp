@@ -177,6 +177,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadRecentFiles() {
         if (adapter == null) return;
+        
+        // Clean up any files that might have been deleted externally
+        RecentFilesManager.getInstance(this).cleanUpInvalidFiles(this);
+        
         List<RecentFile> files = RecentFilesManager.getInstance(this).getRecentFiles();
         adapter.updateList(files);
         if (emptyView != null) {
@@ -383,14 +387,44 @@ public class MainActivity extends AppCompatActivity {
     
     private void shareFile(RecentFile file) {
         try {
-            Uri uri = Uri.parse(file.getUriString());
+            Uri fileUri = Uri.parse(file.getUriString());
+            Uri contentUri;
+            
+            // If it's a file:// URI, we must use FileProvider
+            if ("file".equals(fileUri.getScheme())) {
+                java.io.File f = new java.io.File(fileUri.getPath());
+                contentUri = androidx.core.content.FileProvider.getUriForFile(
+                        this,
+                        getApplicationContext().getPackageName() + ".provider",
+                        f);
+            } else {
+                contentUri = fileUri;
+            }
+
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType(file.getType()); // Or use mime type
-            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            String mimeType = FileUtils.getMimeType(this, contentUri);
+            if (mimeType == null) {
+                mimeType = "*/*";
+            }
+            
+            shareIntent.setType(mimeType);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            
+            // Add ClipData with the correct display name
+            String displayName = file.getName();
+            // If the name doesn't have an extension but we know the type, we might want to append it, 
+            // but usually the name from RecentFile already has it (or is the display name).
+            
+            android.content.ClipData clipData = new android.content.ClipData(
+                    new android.content.ClipDescription(displayName, new String[]{mimeType}),
+                    new android.content.ClipData.Item(contentUri)
+            );
+            shareIntent.setClipData(clipData);
+            
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(shareIntent, "Share file using"));
         } catch (Exception e) {
-            Toast.makeText(this, "Could not share file", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Could not share file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }

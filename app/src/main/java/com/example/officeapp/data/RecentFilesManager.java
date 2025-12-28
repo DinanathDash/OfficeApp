@@ -59,4 +59,19 @@ public class RecentFilesManager {
         String json = gson.toJson(files);
         sharedPreferences.edit().putString(KEY_RECENT_FILES, json).apply();
     }
+
+    public void cleanUpInvalidFiles(Context context) {
+        List<RecentFile> files = getRecentFiles();
+        boolean changed = files.removeIf(file -> {
+            try {
+                return !com.example.officeapp.utils.FileUtils.doesFileExist(context, android.net.Uri.parse(file.getUriString()));
+            } catch (Exception e) {
+                return true; // Remove on error
+            }
+        });
+
+        if (changed) {
+            saveRecentFiles(files);
+        }
+    }
 }
