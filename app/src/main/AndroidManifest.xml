@@ -13,6 +13,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:largeHeap="true"
         android:theme="@style/Theme.OfficeApp">
         <activity
             android:name=".MainActivity"
@@ -63,6 +64,7 @@
         <activity android:name=".ExcelActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
         <activity android:name=".PptActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
         <activity android:name=".PdfActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
+        <activity android:name=".TxtActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
     </application>
 
 </manifest>

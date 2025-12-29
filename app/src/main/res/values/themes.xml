@@ -19,11 +19,11 @@
 
     <!-- Theme for Document Viewers (Forced Light Mode) -->
     <style name="Theme.OfficeApp.Viewer" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorPrimary">@color/viewer_toolbar_color</item>
         <item name="colorPrimaryVariant">@color/dark_blue</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="android:statusBarColor">@color/primary_blue</item>
-        <item name="android:windowLightStatusBar">false</item> 
+        <item name="colorOnPrimary">@color/text_primary</item>
+        <item name="android:statusBarColor">@color/viewer_toolbar_color</item>
+        <item name="android:windowLightStatusBar">true</item> 
         <item name="colorSecondary">@color/primary_blue</item>
         <item name="colorAccent">@color/primary_blue</item>
         <item name="android:windowBackground">@color/bg_gray</item>

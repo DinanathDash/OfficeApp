@@ -9,6 +9,7 @@ activity = "1.12.2"
 constraintlayout = "2.2.1"
 gson = "2.10.1"
 poi = "5.2.5"
+pdfbox = "2.0.27.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,6 +24,7 @@ poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
 poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
 poi-ooxml-full = { group = "org.apache.poi", name = "poi-ooxml-full", version.ref = "poi" }
 poi-scratchpad = { group = "org.apache.poi", name = "poi-scratchpad", version.ref = "poi" }
+pdfbox = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "pdfbox" }
 
 
 [plugins]

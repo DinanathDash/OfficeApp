@@ -93,7 +93,7 @@ dependencies {
     }
     implementation(libs.poi.ooxml.full)
     implementation(libs.poi.scratchpad)
-    implementation("e-iceblue:spire.doc.android:11.6.0")
+    implementation(libs.pdfbox)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

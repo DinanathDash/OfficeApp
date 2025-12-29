@@ -53,8 +53,6 @@
                 <ImageView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:background="@drawable/bg_search_bar"
-                    android:backgroundTint="#B3D9FF"
                     android:scaleType="centerCrop"
                     android:src="@mipmap/ic_launcher_round" />
             </LinearLayout>

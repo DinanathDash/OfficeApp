@@ -11,4 +11,7 @@
     <color name="text_secondary">#8E94A2</color>
     <color name="red">#FF3B30</color>
     <color name="blue_50">#E3F2FD</color>
+    <color name="viewer_toolbar_color">#ABD1FF</color>
+    <color name="search_highlight">#ABD1FF</color>
+    <color name="search_highlight_active">#0066FF</color>
 </resources>

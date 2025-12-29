@@ -42,6 +42,8 @@ public class PptActivity extends AppCompatActivity {
     private SlidesAdapter adapter;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    private List<Slide> allSlides = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,12 +97,12 @@ public class PptActivity extends AppCompatActivity {
                         Toast.makeText(PptActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
 
+            allSlides = new ArrayList<>(slides); // Store copy of all slides
+
             new Handler(Looper.getMainLooper()).post(() -> {
                 adapter.updateList(slides);
                 progressBar.setVisibility(View.GONE);
-                if(getSupportActionBar() != null) {
-                    getSupportActionBar().setSubtitle(slides.size() + " Slides");
-                }
+                updateSubtitle(slides.size());
                 
                 if (slides.size() == 1) {
                     ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
@@ -113,6 +115,12 @@ public class PptActivity extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    private void updateSubtitle(int count) {
+        if(getSupportActionBar() != null) {
+            getSupportActionBar().setSubtitle(count + " Slides");
+        }
     }
 
     private void parsePptx(InputStream inputStream, List<Slide> slidesCollector) throws Exception {
@@ -170,6 +178,51 @@ public class PptActivity extends AppCompatActivity {
             
             slidesCollector.add(new Slide(i + 1, title, content.toString().trim(), notes.trim()));
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        android.view.MenuItem searchItem = menu.findItem(R.id.action_search);
+        androidx.appcompat.widget.SearchView searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+
+        searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                filterSlides(query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterSlides(newText);
+                return true;
+            }
+        });
+        return true;
+    }
+
+    private void filterSlides(String query) {
+        if (allSlides == null || allSlides.isEmpty()) return;
+        
+        List<Slide> filteredList = new ArrayList<>();
+        String lowerCaseQuery = query.toLowerCase();
+
+        for (Slide slide : allSlides) {
+            boolean matches = false;
+            
+            if (slide.getTitle() != null && slide.getTitle().toLowerCase().contains(lowerCaseQuery)) matches = true;
+            else if (slide.getContent() != null && slide.getContent().toLowerCase().contains(lowerCaseQuery)) matches = true;
+            else if (slide.getNotes() != null && slide.getNotes().toLowerCase().contains(lowerCaseQuery)) matches = true; // Also search notes
+            
+            if (matches) {
+                filteredList.add(slide);
+            }
+        }
+        
+        adapter.setSearchQuery(query); // Set query for highlighting
+        adapter.updateList(filteredList);
+        updateSubtitle(filteredList.size());
     }
 
     @Override

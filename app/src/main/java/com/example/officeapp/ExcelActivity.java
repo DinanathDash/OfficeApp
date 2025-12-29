@@ -189,7 +189,7 @@ public class ExcelActivity extends AppCompatActivity {
                         String text = textView.getText().toString().toLowerCase();
                         
                         if (!query.isEmpty() && text.contains(queryLower)) {
-                            textView.setBackgroundColor(Color.YELLOW);
+                            textView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(ExcelActivity.this, R.color.search_highlight));
                         } else {
                             textView.setBackgroundResource(android.R.drawable.edit_text);
                         }

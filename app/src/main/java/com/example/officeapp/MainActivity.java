@@ -228,6 +228,8 @@ public class MainActivity extends AppCompatActivity {
              intent = new Intent(this, PptActivity.class);
         } else if (type.contains("PDF")) {
              intent = new Intent(this, PdfActivity.class);
+        } else if (type.contains("TXT") || type.contains("TEXT")) {
+             intent = new Intent(this, TxtActivity.class);
         } else {
              Toast.makeText(this, "Unsupported file type: " + type, Toast.LENGTH_SHORT).show();
         }

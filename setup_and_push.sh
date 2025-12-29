@@ -6,7 +6,45 @@ KEYSTORE_FILE="release.keystore"
 ALIAS="release"
 # Use Hex to avoid special characters causing issues in secrets
 PASSWORD=$(openssl rand -hex 16)
-KEYTOOL_PATH="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+# Auto-detect keytool path
+KEYTOOL_PATH=""
+
+# 1. Try macOS java_home
+if [ -x "/usr/libexec/java_home" ]; then
+  JAVA_PATH=$(/usr/libexec/java_home 2>/dev/null)
+  if [ -n "$JAVA_PATH" ] && [ -f "$JAVA_PATH/bin/keytool" ]; then
+    KEYTOOL_PATH="$JAVA_PATH/bin/keytool"
+  fi
+fi
+
+# 2. Try common Android Studio paths
+if [ -z "$KEYTOOL_PATH" ]; then
+   studio_paths=(
+    "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+    "/Applications/Android Studio.app/Contents/jre/Contents/Home/bin/keytool"
+    "$HOME/Library/Application Support/JetBrains/Toolbox/apps/AndroidStudio/ch-0/*/Contents/jbr/Contents/Home/bin/keytool"
+  )
+  for path in "${studio_paths[@]}"; do
+    for p in $path; do
+      if [ -f "$p" ] && [ -x "$p" ]; then
+        KEYTOOL_PATH="$p"
+        break 2
+      fi
+    done
+  done
+fi
+
+# 3. Fallback to system command
+if [ -z "$KEYTOOL_PATH" ] && command -v keytool &> /dev/null; then
+  KEYTOOL_PATH="keytool"
+fi
+
+if [ -z "$KEYTOOL_PATH" ]; then
+  echo "❌ Error: Could not find 'keytool'. Please ensure Java or Android Studio is installed."
+  exit 1
+fi
+
+echo "ℹ️  Using keytool at: $KEYTOOL_PATH"
 
 echo "🚀 Starting Automated Release Setup..."
 
