@@ -61,12 +61,6 @@ echo "   - RELEASE_KEYSTORE_BASE64 set"
 
 echo "✅ All secrets uploaded successfully."
 
-# 3. Commit and Push
-echo "📦 Committing and Pushing changes..."
-git add .
-git commit -m "Configure release workflow, versions, and auto-description" || echo "ℹ️  Nothing to commit"
-git push
-
 echo ""
 echo "🎉 SUCCESS! Everything is done."
 echo "   1. Keystore generated."
