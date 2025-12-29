@@ -38,6 +38,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Get Latest Commit Message
+        id: commit_msg
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          echo "msg=$MSG" >> $GITHUB_OUTPUT
+
       - name: Bump Version
         id: bump_version
         run: |
@@ -124,7 +130,7 @@ jobs:
           tag_name: v${{ steps.bump_version.outputs.version_name }}
           name: Release v${{ steps.bump_version.outputs.version_name }}
           body: |
-            ${{ inputs.release_note }}
+            ${{ inputs.release_note != '' && inputs.release_note || steps.commit_msg.outputs.msg }}
             
             ${{ steps.changelog.outputs.changelog }}
           files: app/build/outputs/apk/release/*.apk
