@@ -37,8 +37,8 @@ echo "   - RELEASE_KEY_PASSWORD set"
 gh secret set RELEASE_KEYSTORE_PASSWORD --body "$PASSWORD"
 echo "   - RELEASE_KEYSTORE_PASSWORD set"
 
-# Base64 encode keystore (handle different base64 versions if needed, but standard usually works)
-BASE64_KEY=$(base64 < "$KEYSTORE_FILE")
+# Base64 encode keystore (Strip newlines to ensure single line string)
+BASE64_KEY=$(base64 < "$KEYSTORE_FILE" | tr -d '\n')
 gh secret set RELEASE_KEYSTORE_BASE64 --body "$BASE64_KEY"
 echo "   - RELEASE_KEYSTORE_BASE64 set"
 

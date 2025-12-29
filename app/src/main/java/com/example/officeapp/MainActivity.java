@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecentFilesAdapter adapter;
     private TextView emptyView;
+    private boolean isGridMode = false;
 
     // File Picker Result
     private final ActivityResultLauncher<String[]> openFileLauncher = registerForActivityResult(
@@ -311,15 +312,24 @@ public class MainActivity extends AppCompatActivity {
         popupWindow.setElevation(16);
 
         // View Mode Toggles
+        // View Mode Toggles
         android.widget.ImageView btnList = popupView.findViewById(R.id.action_view_list);
         android.widget.ImageView btnGrid = popupView.findViewById(R.id.action_view_grid);
         
-        btnList.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.primary_blue));
-        btnGrid.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary));
+        if (isGridMode) {
+             btnList.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary));
+             btnGrid.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.primary_blue));
+        } else {
+             btnList.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.primary_blue));
+             btnGrid.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary));
+        }
 
-        btnList.setOnClickListener(view -> popupWindow.dismiss());
+        btnList.setOnClickListener(view -> {
+             if (isGridMode) toggleViewMode(false);
+             popupWindow.dismiss();
+        });
         btnGrid.setOnClickListener(view -> {
-             Toast.makeText(this, "Grid view coming soon", Toast.LENGTH_SHORT).show();
+             if (!isGridMode) toggleViewMode(true);
              popupWindow.dismiss();
         });
 
@@ -368,6 +378,23 @@ public class MainActivity extends AppCompatActivity {
         // xOff -= 16; 
 
         popupWindow.showAsDropDown(v, xOff, 0); 
+    }
+
+    private void toggleViewMode(boolean enableGrid) {
+        isGridMode = enableGrid;
+        
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        if (recyclerView != null) {
+            if (isGridMode) {
+                recyclerView.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 2));
+            } else {
+                recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            }
+            
+            if (adapter != null) {
+                adapter.setGridMode(isGridMode);
+            }
+        }
     }
     
     private void setupFilterItem(View parent, int viewId, String filterType, View.OnClickListener listener) {

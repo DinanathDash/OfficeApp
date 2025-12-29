@@ -22,9 +22,16 @@ public class RecentFilesAdapter extends RecyclerView.Adapter<RecentFilesAdapter.
         void onItemClick(RecentFile file);
     }
 
+    private boolean isGridMode = false;
+
     public RecentFilesAdapter(List<RecentFile> files, OnItemClickListener listener) {
         this.files = files;
         this.listener = listener;
+    }
+
+    public void setGridMode(boolean isGridMode) {
+        this.isGridMode = isGridMode;
+        notifyDataSetChanged();
     }
     
     // Filter logic
@@ -38,10 +45,16 @@ public class RecentFilesAdapter extends RecyclerView.Adapter<RecentFilesAdapter.
         notifyDataSetChanged();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        return isGridMode ? 1 : 0;
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_recent_file, parent, false);
+        int layoutId = isGridMode ? R.layout.item_recent_file_grid : R.layout.item_recent_file;
+        View view = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
         return new ViewHolder(view);
     }
 
