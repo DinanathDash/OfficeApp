@@ -25,6 +25,8 @@ public class TxtActivity extends AppCompatActivity {
     private int currentMatchIndex = -1;
     private android.widget.ScrollView scrollView;
 
+    private String currentQuery = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,45 +42,7 @@ public class TxtActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         textView = findViewById(R.id.textView);
-        scrollView = findViewById(R.id.scrollView); // Ensure ID exists in XML, checked below
-        
-        // Initialize Search Bar
-        android.view.View searchBar = findViewById(R.id.searchBar);
-        android.widget.EditText searchInput = findViewById(R.id.searchInput);
-        android.view.View btnNext = findViewById(R.id.btnNext);
-        android.view.View btnPrev = findViewById(R.id.btnPrev);
-        android.view.View btnClose = findViewById(R.id.btnClose);
-
-        btnClose.setOnClickListener(v -> {
-            searchBar.setVisibility(android.view.View.GONE);
-            findViewById(R.id.toolbar).setVisibility(android.view.View.VISIBLE);
-            highlightText(""); // Clear highlights
-            searchInput.setText("");
-            // Hide keyboard
-            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(searchInput.getWindowToken(), 0);
-        });
-
-        btnNext.setOnClickListener(v -> navigateSearch(1, searchInput.getText().toString()));
-        btnPrev.setOnClickListener(v -> navigateSearch(-1, searchInput.getText().toString()));
-
-        searchInput.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                highlightText(s.toString());
-            }
-            @Override public void afterTextChanged(android.text.Editable s) {}
-        });
-
-        searchInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
-                actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
-                event != null && event.getAction() == android.view.KeyEvent.ACTION_DOWN && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER) {
-                navigateSearch(1, searchInput.getText().toString());
-                return true;
-            }
-            return false;
-        });
+        scrollView = findViewById(R.id.scrollView);
 
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -86,7 +50,6 @@ public class TxtActivity extends AppCompatActivity {
             if (getSupportActionBar() != null) {
                 getSupportActionBar().setTitle(fileName);
             }
-            
             loadText(uri);
         } else {
             finish();
@@ -120,24 +83,47 @@ public class TxtActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_search, menu);
+        
+        android.view.MenuItem searchItem = menu.findItem(R.id.action_search);
+        androidx.appcompat.widget.SearchView searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+        
+        searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // When user presses enter, go to next match
+                // If it's a new query (different from current), highlightText will reset indices
+                // If it's same query, we just navigate
+                if (!query.equals(currentQuery)) {
+                    highlightText(query);
+                } else {
+                    navigateSearch(1);
+                }
+                // searchView.clearFocus(); // Removed to allow repeated Enter presses
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                highlightText(newText);
+                return true;
+            }
+        });
+        
+        searchView.setOnCloseListener(() -> {
+            highlightText("");
+            return false;
+        });
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == R.id.action_search) {
-            findViewById(R.id.toolbar).setVisibility(android.view.View.GONE);
-            findViewById(R.id.searchBar).setVisibility(android.view.View.VISIBLE);
-            findViewById(R.id.searchInput).requestFocus();
-            // Show keyboard
-            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(findViewById(R.id.searchInput), android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-            return true;
-        }
         return super.onOptionsItemSelected(item);
     }
 
     private void highlightText(String query) {
+        currentQuery = query;
         matchIndices.clear();
         currentMatchIndex = -1;
         
@@ -163,30 +149,44 @@ public class TxtActivity extends AppCompatActivity {
                 scrollToMatch(matchIndices.get(0));
             }
         }
+        
         textView.setText(spannableString);
     }
 
-    private void navigateSearch(int direction, String query) {
+    private long lastNavTime = 0;
+
+    private void navigateSearch(int direction) {
         if (matchIndices.isEmpty()) return;
+        
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastNavTime < 300) { // 300ms debounce
+            return;
+        }
+        lastNavTime = currentTime;
         
         currentMatchIndex += direction;
         if (currentMatchIndex >= matchIndices.size()) currentMatchIndex = 0;
         if (currentMatchIndex < 0) currentMatchIndex = matchIndices.size() - 1;
         
-        // Re-apply spans (inefficient but safe for simple highlights)
         android.text.SpannableString spannableString = new android.text.SpannableString(fullText);
-        int qLen = query.length();
+        int qLen = currentQuery.length();
         
-        for (int i = 0; i < matchIndices.size(); i++) {
-            int idx = matchIndices.get(i);
-            int color = (i == currentMatchIndex) ? R.color.search_highlight_active : R.color.search_highlight;
-            spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, color)), 
+        // Re-highlight all
+        for (int idx : matchIndices) {
+             spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight)), 
                     idx, idx + qLen, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         
+        // Highlight active
+        int activeIdx = matchIndices.get(currentMatchIndex);
+        spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active)), 
+                activeIdx, activeIdx + qLen, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        
         textView.setText(spannableString);
-        scrollToMatch(matchIndices.get(currentMatchIndex));
+        scrollToMatch(activeIdx);
     }
+    
+
     
     private void scrollToMatch(int index) {
         if (textView.getLayout() != null) {

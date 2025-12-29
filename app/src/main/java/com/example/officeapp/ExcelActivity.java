@@ -37,6 +37,11 @@ public class ExcelActivity extends AppCompatActivity {
     private Workbook workbook;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+
+    private java.util.List<TextView> matchViews = new java.util.ArrayList<>();
+    private int currentMatchIndex = -1;
+    private android.widget.ScrollView scrollView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +58,8 @@ public class ExcelActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         tableLayout = findViewById(R.id.tableLayout);
         progressBar = findViewById(R.id.progressBar);
+        scrollView = findViewById(R.id.scrollView);
+        horizontalScrollView = findViewById(R.id.horizontalScrollView);
 
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -113,11 +120,6 @@ public class ExcelActivity extends AppCompatActivity {
         tableLayout.removeAllViews();
         if (workbook == null) return;
         
-        // Basic implementation: Load on main thread for responsiveness if small, 
-        // but for large sheets this should be async or paged.
-        // For this task, we'll do simple synchronous loading of the view.
-        // Note: For very large sheets, this will freeze. Paging is complex.
-        
         Sheet sheet = workbook.getSheetAt(sheetIndex);
         
         for (Row row : sheet) {
@@ -125,7 +127,7 @@ public class ExcelActivity extends AppCompatActivity {
             for (Cell cell : row) {
                 TextView textView = new TextView(this);
                 textView.setPadding(16, 16, 16, 16);
-                textView.setBackgroundResource(android.R.drawable.edit_text); // Simple border effect
+                textView.setBackgroundResource(android.R.drawable.edit_text);
                 textView.setText(getCellValue(cell));
                 tableRow.addView(textView);
             }
@@ -152,31 +154,59 @@ public class ExcelActivity extends AppCompatActivity {
         }
     }
     
+    private String currentQuery = "";
+
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_search, menu);
+        
         android.view.MenuItem searchItem = menu.findItem(R.id.action_search);
         androidx.appcompat.widget.SearchView searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
         
         searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                highlightCells(query);
+                if (!query.equals(currentQuery)) {
+                    currentQuery = query;
+                    highlightCells(query);
+                } else {
+                    navigateSearch(1);
+                }
+                // searchView.clearFocus();
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                highlightCells(newText);
+                if (!newText.equals(currentQuery)) {
+                    currentQuery = newText;
+                    highlightCells(newText);
+                }
                 return true;
             }
         });
+        
+        searchView.setOnCloseListener(() -> {
+            highlightCells("");
+            currentQuery = "";
+            return false;
+        });
+        
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
+    
     private void highlightCells(String query) {
         if (tableLayout == null) return;
+        
+        matchViews.clear();
+        currentMatchIndex = -1;
         String queryLower = query.toLowerCase();
+        boolean hasQuery = !query.isEmpty();
         
         for (int i = 0; i < tableLayout.getChildCount(); i++) {
             View child = tableLayout.getChildAt(i);
@@ -188,7 +218,8 @@ public class ExcelActivity extends AppCompatActivity {
                         TextView textView = (TextView) cellView;
                         String text = textView.getText().toString().toLowerCase();
                         
-                        if (!query.isEmpty() && text.contains(queryLower)) {
+                        if (hasQuery && text.contains(queryLower)) {
+                            matchViews.add(textView);
                             textView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(ExcelActivity.this, R.color.search_highlight));
                         } else {
                             textView.setBackgroundResource(android.R.drawable.edit_text);
@@ -196,6 +227,76 @@ public class ExcelActivity extends AppCompatActivity {
                     }
                 }
             }
+        }
+        
+        if (!matchViews.isEmpty()) {
+            currentMatchIndex = 0;
+            // set active
+            matchViews.get(0).setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active));
+            scrollToView(matchViews.get(0));
+        }
+    }
+    
+    private long lastNavTime = 0;
+    
+    private void navigateSearch(int direction) {
+        if (matchViews.isEmpty()) return;
+        
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastNavTime < 300) { // 300ms debounce
+            return;
+        }
+        lastNavTime = currentTime;
+        
+        // De-highlight current active (set back to normal match highlight)
+        matchViews.get(currentMatchIndex).setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight));
+        
+        int oldIndex = currentMatchIndex;
+        currentMatchIndex += direction;
+        if (currentMatchIndex >= matchViews.size()) currentMatchIndex = 0;
+        if (currentMatchIndex < 0) currentMatchIndex = matchViews.size() - 1;
+        
+        android.util.Log.d("ExcelActivity", "Navigating: " + oldIndex + " -> " + currentMatchIndex + " (Total: " + matchViews.size() + ")");
+
+        // Highlight new active
+        matchViews.get(currentMatchIndex).setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active));
+        scrollToView(matchViews.get(currentMatchIndex));
+    }
+    
+    private android.widget.HorizontalScrollView horizontalScrollView;
+
+    // ... in onCreate ...
+    // Note: I will inject the binding in onCreate via a separate chunk or just rely on finding it here if lazy, 
+    // but better to bind in onCreate.
+    // Let's assume I bind it in onCreate in a separate replace/chunk or I can just findViewById locally if I want to be safe and lazy,
+    // but proper way is field.
+    
+    private void scrollToView(View view) {
+        if (view == null) return;
+        
+        // Ensure we match the structure: TableRow -> TextView
+        if (!(view.getParent() instanceof TableRow)) return;
+        TableRow row = (TableRow) view.getParent();
+        
+        // Calculate positions
+        int x = view.getLeft() + row.getLeft();
+        int y = row.getTop(); // relative to TableLayout
+        
+        // Find scroll views if not bound (or bind them in onCreate and use fields)
+        if (scrollView == null) scrollView = findViewById(R.id.scrollView);
+        if (horizontalScrollView == null) horizontalScrollView = findViewById(R.id.horizontalScrollView);
+        
+        if (scrollView != null && horizontalScrollView != null) {
+            // Scroll Vertical
+            int targetY = y - (scrollView.getHeight() / 2) + (row.getHeight() / 2);
+            scrollView.smoothScrollTo(0, targetY);
+            
+            // Scroll Horizontal
+            int targetX = x - (horizontalScrollView.getWidth() / 2) + (view.getWidth() / 2);
+            horizontalScrollView.smoothScrollTo(targetX, 0);
+             
+            // Also call requestRectangleOnScreen as backup/accessibility
+            view.requestRectangleOnScreen(new android.graphics.Rect(0, 0, view.getWidth(), view.getHeight()), true);
         }
     }
     

@@ -180,6 +180,23 @@ public class PptActivity extends AppCompatActivity {
         }
     }
 
+    private String currentQuery = "";
+    private static class PptMatch {
+        int slideIndex;
+        int fieldType; // 0=Title, 1=Content, 2=Notes
+        int startIndex;
+        
+        public PptMatch(int slideIndex, int fieldType, int startIndex) {
+            this.slideIndex = slideIndex;
+            this.fieldType = fieldType;
+            this.startIndex = startIndex;
+        }
+    }
+
+    private List<PptMatch> allMatches = new ArrayList<>();
+    // private List<Integer> matchSlides = new ArrayList<>(); // Removed in favor of allMatches
+    private int currentMatchIndex = -1;
+
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_search, menu);
@@ -189,40 +206,116 @@ public class PptActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                filterSlides(query);
+                if (!query.equals(currentQuery)) {
+                    currentQuery = query;
+                    findMatches(query);
+                } else {
+                    navigateSearch(1);
+                }
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                filterSlides(newText);
+                // Live highlighting, but don't jump yet
+                // We do NOT update currentQuery here, so Submit will trigger findMatches (which populates matchSlides)
+                adapter.setSearchQuery(newText);
+                adapter.notifyDataSetChanged();
                 return true;
             }
         });
+        
+        searchView.setOnCloseListener(() -> {
+            currentQuery = "";
+            adapter.setSearchQuery("");
+            adapter.updateList(allSlides); // Ensure full list is shown
+            allMatches.clear();
+            return false;
+        });
+        
         return true;
     }
-
-    private void filterSlides(String query) {
+    
+    private void findMatches(String query) {
         if (allSlides == null || allSlides.isEmpty()) return;
         
-        List<Slide> filteredList = new ArrayList<>();
+        // Ensure we are showing all slides, not filtered
+        adapter.updateList(allSlides);
+        adapter.setSearchQuery(query);
+        adapter.notifyDataSetChanged();
+        
+        allMatches.clear();
         String lowerCaseQuery = query.toLowerCase();
 
-        for (Slide slide : allSlides) {
-            boolean matches = false;
+        for (int i = 0; i < allSlides.size(); i++) {
+            Slide slide = allSlides.get(i);
             
-            if (slide.getTitle() != null && slide.getTitle().toLowerCase().contains(lowerCaseQuery)) matches = true;
-            else if (slide.getContent() != null && slide.getContent().toLowerCase().contains(lowerCaseQuery)) matches = true;
-            else if (slide.getNotes() != null && slide.getNotes().toLowerCase().contains(lowerCaseQuery)) matches = true; // Also search notes
+            // Title (0)
+            if (slide.getTitle() != null) {
+                findAllIndices(allMatches, i, 0, slide.getTitle().toLowerCase(), lowerCaseQuery);
+            }
             
-            if (matches) {
-                filteredList.add(slide);
+            // Content (1)
+            if (slide.getContent() != null) {
+                findAllIndices(allMatches, i, 1, slide.getContent().toLowerCase(), lowerCaseQuery);
+            }
+            
+            // Notes (2)
+            if (slide.getNotes() != null) {
+                findAllIndices(allMatches, i, 2, slide.getNotes().toLowerCase(), lowerCaseQuery);
             }
         }
         
-        adapter.setSearchQuery(query); // Set query for highlighting
-        adapter.updateList(filteredList);
-        updateSubtitle(filteredList.size());
+        if (!allMatches.isEmpty()) {
+            currentMatchIndex = 0;
+            navigateToMatch(currentMatchIndex);
+            Toast.makeText(this, "Found " + allMatches.size() + " matches", Toast.LENGTH_SHORT).show();
+        } else {
+             // Reset active
+             adapter.setActiveMatch(-1, -1, -1);
+             Toast.makeText(this, "No matches found", Toast.LENGTH_SHORT).show();
+        }
+        updateSubtitle(allSlides.size());
+    }
+    
+    private void findAllIndices(List<PptMatch> matches, int slideIndex, int fieldType, String text, String query) {
+        int index = text.indexOf(query);
+        while (index >= 0) {
+            matches.add(new PptMatch(slideIndex, fieldType, index));
+            index = text.indexOf(query, index + query.length());
+        }
+    }
+    
+    private long lastNavTime = 0;
+    
+    private void navigateSearch(int direction) {
+        if (allMatches.isEmpty()) return;
+        
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastNavTime < 300) { // 300ms debounce
+            return;
+        }
+        lastNavTime = currentTime;
+        
+        currentMatchIndex += direction;
+        if (currentMatchIndex >= allMatches.size()) currentMatchIndex = 0;
+        if (currentMatchIndex < 0) currentMatchIndex = allMatches.size() - 1;
+        
+        navigateToMatch(currentMatchIndex);
+        Toast.makeText(this, "Match " + (currentMatchIndex + 1) + " of " + allMatches.size(), Toast.LENGTH_SHORT).show();
+    }
+    
+    private void navigateToMatch(int index) {
+        PptMatch match = allMatches.get(index);
+        scrollToSlide(match.slideIndex);
+        adapter.setActiveMatch(match.slideIndex, match.fieldType, match.startIndex);
+    }
+    
+    private void scrollToSlide(int position) {
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager instanceof LinearLayoutManager) {
+            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+        }
     }
 
     @Override

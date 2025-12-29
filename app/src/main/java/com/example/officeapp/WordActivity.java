@@ -25,6 +25,8 @@ public class WordActivity extends AppCompatActivity {
     private android.webkit.WebView webView;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,54 +53,6 @@ public class WordActivity extends AppCompatActivity {
             webView.getSettings().setLoadWithOverviewMode(true);
         }
 
-        // Initialize Search Bar
-        View searchBar = findViewById(R.id.searchBar);
-        android.widget.EditText searchInput = findViewById(R.id.searchInput);
-        View btnNext = findViewById(R.id.btnNext);
-        View btnPrev = findViewById(R.id.btnPrev);
-        View btnClose = findViewById(R.id.btnClose);
-
-        btnClose.setOnClickListener(v -> {
-            searchBar.setVisibility(View.GONE);
-            findViewById(R.id.toolbar).setVisibility(View.VISIBLE);
-            if (webView != null) webView.evaluateJavascript("highlightText('')", null);
-            searchInput.setText("");
-            // Hide keyboard
-            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(searchInput.getWindowToken(), 0);
-        });
-
-        btnNext.setOnClickListener(v -> {
-            if (webView != null) webView.evaluateJavascript("navigateSearch(1)", null);
-        });
-
-        btnPrev.setOnClickListener(v -> {
-            if (webView != null) webView.evaluateJavascript("navigateSearch(-1)", null);
-        });
-
-        searchInput.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (webView != null) {
-                    String escapedQuery = escapeJsString(s.toString());
-                    webView.evaluateJavascript("highlightText('" + escapedQuery + "')", null);
-                }
-            }
-            @Override public void afterTextChanged(android.text.Editable s) {}
-        });
-
-        searchInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
-                actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
-                event != null && event.getAction() == android.view.KeyEvent.ACTION_DOWN && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER) {
-                if (webView != null) {
-                    webView.evaluateJavascript("navigateSearch(1)", null);
-                }
-                return true; // Consume event, keep keyboard or let user decide? Returning true usually keeps keyboard.
-            }
-            return false;
-        });
-
         Uri uri = getIntent().getData();
         if (uri != null) {
             String fileName = FileUtils.getFileName(this, uri);
@@ -118,23 +72,63 @@ public class WordActivity extends AppCompatActivity {
                 .replace("\r", "");
     }
 
+    private String currentQuery = "";
+
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_search, menu);
+        
+        android.view.MenuItem searchItem = menu.findItem(R.id.action_search);
+        androidx.appcompat.widget.SearchView searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+        
+        searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Trigger next match on Enter
+                if (webView != null) {
+                    if (!query.equals(currentQuery)) {
+                        currentQuery = query;
+                        webView.evaluateJavascript("highlightText('" + escapeJsString(query) + "')", null);
+                    } else {
+                        webView.evaluateJavascript("navigateSearch(1)", null);
+                    }
+                }
+                // searchView.clearFocus();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                // Determine if we should highlight on change or wait for submit
+                // For now, let's keep it responsive but update currentQuery if we want strict mode
+                // But performSearch resets index, so we should allow it for "live" search, 
+                // but when Enter is pressed, we don't want to reset if it's the same text.
+                if (!newText.equals(currentQuery)) {
+                    currentQuery = newText;
+                    performSearch(newText);
+                }
+                return true;
+            }
+        });
+
+        searchView.setOnCloseListener(() -> {
+            if (webView != null) webView.evaluateJavascript("highlightText('')", null);
+            currentQuery = "";
+            return false;
+        });
+
         return true;
+    }
+
+    private void performSearch(String query) {
+        if (webView != null) {
+            String escapedQuery = escapeJsString(query);
+            webView.evaluateJavascript("highlightText('" + escapedQuery + "')", null);
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == R.id.action_search) {
-            findViewById(R.id.toolbar).setVisibility(View.GONE);
-            findViewById(R.id.searchBar).setVisibility(View.VISIBLE);
-            findViewById(R.id.searchInput).requestFocus();
-            // Show keyboard
-            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(findViewById(R.id.searchInput), android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-            return true;
-        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -161,6 +155,13 @@ public class WordActivity extends AppCompatActivity {
                           .append("</style>")
                           .append("<script>")
                           .append("var currentMatchIndex = 0;")
+                          .append("function escapeHtml(text) {")
+                          .append("  return text.replace(/&/g, '&amp;')")
+                          .append("             .replace(/</g, '&lt;')")
+                          .append("             .replace(/>/g, '&gt;')")
+                          .append("             .replace(/\"/g, '&quot;')")
+                          .append("             .replace(/'/g, '&#039;');")
+                          .append("}")
                           .append("function highlightText(query) {")
                           .append("  currentMatchIndex = 0;")
                           .append("  // Remove old highlights\n")
@@ -170,7 +171,7 @@ public class WordActivity extends AppCompatActivity {
                           .append("    parent.replaceChild(document.createTextNode(oldSpans[i].textContent), oldSpans[i]);\n")
                           .append("    parent.normalize();\n")
                           .append("  }\n")
-                          .append("  if (!query) return;\n")
+                          .append("  if (!query) return 0;\n")
                           .append("  \n")
                           .append("  // Find and highlight new\n")
                           .append("  var regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + ')', 'gi');\n")
@@ -183,7 +184,8 @@ public class WordActivity extends AppCompatActivity {
                           .append("    if (node.parentNode.tagName === 'SCRIPT' || node.parentNode.tagName === 'STYLE') continue;\n")
                           .append("    if (regex.test(node.nodeValue)) {\n")
                           .append("      var span = document.createElement('span');\n")
-                          .append("      span.innerHTML = node.nodeValue.replace(regex, '<span class=\"search-highlight\">$1</span>');\n")
+                          .append("      var safeText = escapeHtml(node.nodeValue);\n")
+                          .append("      span.innerHTML = safeText.replace(regex, '<span class=\"search-highlight\">$1</span>');\n")
                           .append("      node.parentNode.replaceChild(span, node);\n")
                           .append("    }\n")
                           .append("  }\n")
@@ -193,8 +195,13 @@ public class WordActivity extends AppCompatActivity {
                           .append("    matches[0].classList.add('search-highlight-active');\n")
                           .append("    matches[0].scrollIntoView({behavior: 'smooth', block: 'center'});\n")
                           .append("  }\n")
+                          .append("  return matches.length;\n")
                           .append("}")
+                          .append("var lastNavTime = 0;")
                           .append("function navigateSearch(direction) {")
+                          .append("  var now = Date.now();")
+                          .append("  if (now - lastNavTime < 300) return;")
+                          .append("  lastNavTime = now;")
                           .append("  var matches = document.querySelectorAll('.search-highlight');")
                           .append("  if (matches.length === 0) return;")
                           .append("  matches[currentMatchIndex].classList.remove('search-highlight-active');")

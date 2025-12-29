@@ -40,6 +40,17 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
         return new ViewHolder(view);
     }
 
+    private int activeSlidePos = -1;
+    private int activeFieldType = -1; // 0=Title, 1=Content, 2=Notes
+    private int activeChaIndex = -1;
+
+    public void setActiveMatch(int slidePos, int fieldType, int charIndex) {
+        this.activeSlidePos = slidePos;
+        this.activeFieldType = fieldType;
+        this.activeChaIndex = charIndex;
+        notifyDataSetChanged();
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Slide slide = slides.get(position);
@@ -50,20 +61,20 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
             holder.tvTitle.setVisibility(View.GONE);
         } else {
             holder.tvTitle.setVisibility(View.VISIBLE);
-            setHighlightedText(holder.tvTitle, slide.getTitle());
+            setHighlightedText(holder.tvTitle, slide.getTitle(), position, 0);
         }
         
-        setHighlightedText(holder.tvContent, slide.getContent());
+        setHighlightedText(holder.tvContent, slide.getContent(), position, 1);
         
         if (slide.getNotes() == null || slide.getNotes().trim().isEmpty()) {
             holder.layoutNotes.setVisibility(View.GONE);
         } else {
             holder.layoutNotes.setVisibility(View.VISIBLE);
-            setHighlightedText(holder.tvNotes, slide.getNotes());
+            setHighlightedText(holder.tvNotes, slide.getNotes(), position, 2);
         }
     }
     
-    private void setHighlightedText(TextView textView, String text) {
+    private void setHighlightedText(TextView textView, String text, int slidePos, int fieldType) {
         if (text == null) text = "";
         
         if (searchQuery.isEmpty()) {
@@ -77,7 +88,10 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
         int index = lowerCaseText.indexOf(lowerCaseQuery);
         
         while (index >= 0) {
-            spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(textView.getContext(), R.color.search_highlight)), 
+            boolean isActive = (slidePos == activeSlidePos && fieldType == activeFieldType && index == activeChaIndex);
+            int colorRes = isActive ? R.color.search_highlight_active : R.color.search_highlight;
+            
+            spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(textView.getContext(), colorRes)), 
                     index, index + searchQuery.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             index = lowerCaseText.indexOf(lowerCaseQuery, index + searchQuery.length());
         }

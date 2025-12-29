@@ -73,30 +73,6 @@ public class PdfActivity extends AppCompatActivity {
             finish();
         }
     }
-    
-    private void extractText(Uri uri) {
-        new Thread(() -> {
-            try {
-                InputStream inputStream = getContentResolver().openInputStream(uri);
-                PDDocument document = PDDocument.load(inputStream);
-                PDFTextStripper stripper = new PDFTextStripper();
-                
-                int pageCount = document.getNumberOfPages();
-                for (int i = 0; i < pageCount; i++) {
-                    stripper.setStartPage(i + 1);
-                    stripper.setEndPage(i + 1);
-                    String text = stripper.getText(document);
-                    pageTextMap.put(i, text.toLowerCase());
-                }
-                document.close();
-                isTextExtracted = true;
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-                // Fail silently, search will just not work
-            }
-        }).start();
-    }
 
     private void openRenderer(Uri uri) throws IOException {
         fileDescriptor = getContentResolver().openFileDescriptor(uri, "r");
@@ -117,6 +93,8 @@ public class PdfActivity extends AppCompatActivity {
         }
     }
 
+    private String currentQuery = "";
+
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_search, menu);
@@ -126,17 +104,62 @@ public class PdfActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                performSearch(query);
-                return true;
+                android.util.Log.d("PdfActivity", "Search submit: " + query + ", current: " + currentQuery);
+                if (!query.equals(currentQuery)) {
+                    currentQuery = query;
+                    performSearch(query);
+                } else {
+                    navigateSearch(1);
+                }
+                return true; // We handled the submission
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                return false;
+                // Return true to indicate we handled it (by ignoring live search).
+                // We do NOT update currentQuery here, otherwise submit will think we already searched it.
+                return true; 
             }
+        });
+
+        searchView.setOnCloseListener(() -> {
+            searchResults.clear();
+            currentSearchIndex = -1;
+            currentQuery = "";
+            return false;
         });
         
         return true;
+    }
+    
+    private void extractText(Uri uri) {
+        new Thread(() -> {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(uri);
+                PDDocument document = PDDocument.load(inputStream);
+                PDFTextStripper stripper = new PDFTextStripper();
+                
+                int pageCount = document.getNumberOfPages();
+                android.util.Log.d("PdfActivity", "Starting extraction for " + pageCount + " pages");
+                for (int i = 0; i < pageCount; i++) {
+                    stripper.setStartPage(i + 1);
+                    stripper.setEndPage(i + 1);
+                    String text = stripper.getText(document);
+                    pageTextMap.put(i, text.toLowerCase());
+                    if (i % 5 == 0) android.util.Log.d("PdfActivity", "Extracted page " + i);
+                }
+                document.close();
+                isTextExtracted = true;
+                android.util.Log.d("PdfActivity", "Extraction complete");
+                
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> 
+                    Toast.makeText(PdfActivity.this, "Search index ready", Toast.LENGTH_SHORT).show());
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                android.util.Log.e("PdfActivity", "Extraction failed", e);
+            }
+        }).start();
     }
     
     private void performSearch(String query) {
@@ -162,10 +185,29 @@ public class PdfActivity extends AppCompatActivity {
         } else {
             // Found matches
             currentSearchIndex = 0;
-            int pageIndex = searchResults.get(0);
-            scrollToPage(pageIndex);
-            Toast.makeText(this, "Found on page " + (pageIndex + 1) + " (" + searchResults.size() + " matches)", Toast.LENGTH_SHORT).show();
+            scrollToPage(searchResults.get(0));
+            Toast.makeText(this, "Found on page " + (searchResults.get(0) + 1) + " (" + searchResults.size() + " matches)", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private long lastNavTime = 0;
+
+    private void navigateSearch(int direction) {
+        if (searchResults.isEmpty()) return;
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastNavTime < 300) { // 300ms debounce
+            return;
+        }
+        lastNavTime = currentTime;
+
+        currentSearchIndex += direction;
+        if (currentSearchIndex >= searchResults.size()) currentSearchIndex = 0;
+        if (currentSearchIndex < 0) currentSearchIndex = searchResults.size() - 1;
+
+        int pageIndex = searchResults.get(currentSearchIndex);
+        scrollToPage(pageIndex);
+        Toast.makeText(this, "Match " + (currentSearchIndex + 1) + " of " + searchResults.size() + " (Page " + (pageIndex + 1) + ")", Toast.LENGTH_SHORT).show();
     }
     
     private void scrollToPage(int pageIndex) {
