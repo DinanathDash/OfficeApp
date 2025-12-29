@@ -39,7 +39,7 @@ android {
                 keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: project.findProperty("RELEASE_KEY_PASSWORD") as String?
             } else if (System.getenv("RELEASE_KEYSTORE_BASE64") != null) {
                 // For CI/CD: Create keystore from base64 env var
-                val decodedKeystore = Base64.getDecoder().decode(System.getenv("RELEASE_KEYSTORE_BASE64"))
+                val decodedKeystore = Base64.getMimeDecoder().decode(System.getenv("RELEASE_KEYSTORE_BASE64"))
                 val tempKeystore = File.createTempFile("release", ".keystore")
                 tempKeystore.writeBytes(decodedKeystore)
                 storeFile = tempKeystore
