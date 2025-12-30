@@ -8,7 +8,7 @@ import java.io.FileInputStream
 import java.io.File
 
 android {
-    namespace = "com.example.officeapp"
+    namespace = "com.dinanathdash.officeapp"
     compileSdk {
         version = release(36)
     }
@@ -20,7 +20,7 @@ android {
             versionProps.load(FileInputStream(versionPropsFile))
         }
 
-        applicationId = "com.example.officeapp"
+        applicationId = "com.dinanathdash.officeapp"
         minSdk = 32
         targetSdk = 36
         versionCode = (versionProps["VERSION_CODE"] as String? ?: "1").toInt()
