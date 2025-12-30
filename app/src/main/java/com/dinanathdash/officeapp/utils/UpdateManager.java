@@ -1,17 +1,20 @@
 package com.dinanathdash.officeapp.utils;
 
-import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
 import com.dinanathdash.officeapp.BuildConfig;
+import com.dinanathdash.officeapp.R;
+import com.dinanathdash.officeapp.ui.UpdateBottomSheetFragment;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.json.JSONObject;
 
@@ -36,9 +39,13 @@ public class UpdateManager {
     }
 
     public void checkForUpdates() {
-        ProgressDialog progressDialog = new ProgressDialog(context);
-        progressDialog.setMessage("Checking for updates...");
-        progressDialog.setCancelable(false);
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_checking_updates, null);
+
+        AlertDialog progressDialog = new MaterialAlertDialogBuilder(context)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+        
         progressDialog.show();
 
         executor.execute(() -> {
@@ -106,7 +113,12 @@ public class UpdateManager {
     }
 
     private void showUpdateDialog(String version, String url, String notes) {
-        new AlertDialog.Builder(context)
+        if (context instanceof androidx.fragment.app.FragmentActivity) {
+            UpdateBottomSheetFragment.newInstance(version, url, notes)
+                    .show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), "UpdateDialog");
+        } else {
+            // Fallback for non-AppCompatActivity contexts (unlikely in this app but safe)
+            new MaterialAlertDialogBuilder(context)
                 .setTitle("Update Available")
                 .setMessage("A new version " + version + " is available.\n\n" + notes)
                 .setPositiveButton("Update", (dialog, which) -> {
@@ -115,5 +127,6 @@ public class UpdateManager {
                 })
                 .setNegativeButton("Later", null)
                 .show();
+        }
     }
 }
