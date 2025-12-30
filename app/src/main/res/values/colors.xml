@@ -12,6 +12,11 @@
     <color name="red">#FF3B30</color>
     <color name="blue_50">#E3F2FD</color>
     <color name="viewer_toolbar_color">#ABD1FF</color>
+    <color name="word_primary">#2B7CD3</color>
+    <color name="excel_primary">#21A366</color>
+    <color name="ppt_primary">#D35230</color>
+    <color name="pdf_primary">#D32F2F</color>
+    <color name="text_file_primary">#9E9E9E</color>
     <color name="search_highlight">#ABD1FF</color>
     <color name="search_highlight_active">#0066FF</color>
 </resources>

@@ -60,11 +60,11 @@
                 android:resource="@xml/provider_paths" />
         </provider>
         
-        <activity android:name=".WordActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
-        <activity android:name=".ExcelActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
-        <activity android:name=".PptActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
-        <activity android:name=".PdfActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
-        <activity android:name=".TxtActivity" android:theme="@style/Theme.OfficeApp.Viewer" android:exported="false"/>
+        <activity android:name=".WordActivity" android:theme="@style/Theme.OfficeApp.Viewer.Word" android:exported="false"/>
+        <activity android:name=".ExcelActivity" android:theme="@style/Theme.OfficeApp.Viewer.Excel" android:exported="false"/>
+        <activity android:name=".PptActivity" android:theme="@style/Theme.OfficeApp.Viewer.Ppt" android:exported="false"/>
+        <activity android:name=".PdfActivity" android:theme="@style/Theme.OfficeApp.Viewer.Pdf" android:exported="false"/>
+        <activity android:name=".TxtActivity" android:theme="@style/Theme.OfficeApp.Viewer.Txt" android:exported="false"/>
     </application>
 
 </manifest>

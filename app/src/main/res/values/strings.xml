@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">OfficeApp</string>
+    <string name="splash_title">All your documents\nin one place</string>
+    <string name="splash_subtitle">View and manage documents anywhere</string>
+    <string name="btn_get_started">Get Started</string>
 </resources>

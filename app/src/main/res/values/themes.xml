@@ -28,4 +28,29 @@
         <item name="colorAccent">@color/primary_blue</item>
         <item name="android:windowBackground">@color/bg_gray</item>
     </style>
+
+    <style name="Theme.OfficeApp.Viewer.Word" parent="Theme.OfficeApp.Viewer">
+        <item name="colorPrimary">@color/word_primary</item>
+        <item name="android:statusBarColor">@color/word_primary</item>
+    </style>
+
+    <style name="Theme.OfficeApp.Viewer.Excel" parent="Theme.OfficeApp.Viewer">
+        <item name="colorPrimary">@color/excel_primary</item>
+        <item name="android:statusBarColor">@color/excel_primary</item>
+    </style>
+
+    <style name="Theme.OfficeApp.Viewer.Ppt" parent="Theme.OfficeApp.Viewer">
+        <item name="colorPrimary">@color/ppt_primary</item>
+        <item name="android:statusBarColor">@color/ppt_primary</item>
+    </style>
+
+    <style name="Theme.OfficeApp.Viewer.Pdf" parent="Theme.OfficeApp.Viewer">
+        <item name="colorPrimary">@color/viewer_toolbar_color</item>
+        <item name="android:statusBarColor">@color/viewer_toolbar_color</item>
+    </style>
+
+    <style name="Theme.OfficeApp.Viewer.Txt" parent="Theme.OfficeApp.Viewer">
+        <item name="colorPrimary">@color/text_file_primary</item>
+        <item name="android:statusBarColor">@color/text_file_primary</item>
+    </style>
 </resources>
