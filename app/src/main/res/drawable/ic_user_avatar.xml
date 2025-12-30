@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <!-- Background Circle (Light Blue) -->
+  <path
+      android:fillColor="#A0C4FF"
+      android:pathData="M12,12m-12,0a12,12 0,1,1 24,0a12,12 0,1,1 -24,0"/>
+  
+  <!-- Person Icon (White Stroke) -->
+  <group
+      android:pivotX="12"
+      android:pivotY="12"
+      android:scaleX="0.6"
+      android:scaleY="0.6">
+      <path
+          android:strokeColor="#FFFFFF"
+          android:strokeWidth="2"
+          android:strokeLineCap="square"
+          android:pathData="M16.5 7.5C16.5 8.69347 16.0259 9.83807 15.182 10.682C14.3381 11.5259 13.1935 12 12 12C10.8065 12 9.66193 11.5259 8.81802 10.682C7.97411 9.83807 7.5 8.69347 7.5 7.5C7.5 6.30653 7.97411 5.16193 8.81802 4.31802C9.66193 3.47411 10.8065 3 12 3C13.1935 3 14.3381 3.47411 15.182 4.31802C16.0259 5.16193 16.5 6.30653 16.5 7.5ZM20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21H20Z"/>
+  </group>
+</vector>

@@ -78,6 +78,10 @@ android {
             excludes += "META-INF/ASL2.0"
         }
     }
+    
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
 
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".OfficeApp"
@@ -65,6 +66,7 @@
         <activity android:name=".PptActivity" android:theme="@style/Theme.OfficeApp.Viewer.Ppt" android:exported="false"/>
         <activity android:name=".PdfActivity" android:theme="@style/Theme.OfficeApp.Viewer.Pdf" android:exported="false"/>
         <activity android:name=".TxtActivity" android:theme="@style/Theme.OfficeApp.Viewer.Txt" android:exported="false"/>
+        <activity android:name=".AboutActivity" android:exported="false" android:screenOrientation="portrait" android:theme="@style/Theme.OfficeApp.About"/>
     </application>
 
 </manifest>

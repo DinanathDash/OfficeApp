@@ -106,8 +106,8 @@ public class PdfActivity extends AppCompatActivity {
             return;
         }
 
-        com.dinanathdash.officeapp.ui.ExtractedTextBottomSheetFragment fragment = 
-            com.dinanathdash.officeapp.ui.ExtractedTextBottomSheetFragment.newInstance(text, pageIndex);
+        com.dinanathdash.officeapp.ui.TextBottomSheetFragment fragment = 
+            com.dinanathdash.officeapp.ui.TextBottomSheetFragment.newInstance("Page " + (pageIndex + 1) + " Text", text);
         fragment.show(getSupportFragmentManager(), "ExtractedText");
     }
 

@@ -127,6 +127,12 @@ public class MainActivity extends AppCompatActivity {
         if (ivRecentFilesMore != null) {
             ivRecentFilesMore.setOnClickListener(v -> showHeaderPopup(v));
         }
+        
+        // Profile / About Screen
+        View ivProfile = findViewById(R.id.ivProfile);
+        if (ivProfile != null) {
+            ivProfile.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
+        }
 
         // Load Recents
         loadRecentFiles();
@@ -174,7 +180,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadRecentFiles();
+
     }
+    
+
 
     private void loadRecentFiles() {
         if (adapter == null) return;

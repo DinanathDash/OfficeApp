@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_about">About</string>
+    <string name="about_app_name">OfficeApp</string>
+    <string name="action_update">Update</string>
+    <string name="action_privacy">Privacy and Legal</string>
+    <string name="action_license">Open-source License</string>
+    <string name="dialog_edit_name_title">Edit Name</string>
+    <string name="dialog_edit_name_hint">Enter your name</string>
+    <string name="dialog_action_save">Save</string>
+    <string name="dialog_action_cancel">Cancel</string>
+
+    <string name="privacy_policy_text">
+        <![CDATA[
+        <b>Privacy Policy</b><br/><br/>
+        This privacy policy governs your use of the software application OfficeApp ("Application") for mobile devices that was created by Dinanath Dash.<br/><br/>
+        <b>User Provided Information</b><br/>
+        The Application obtains the information you provide when you download and register the Application. Registration with us is optional. However, please keep in mind that you may not be able to use some of the features offered by the Application unless you register with us.<br/><br/>
+        <b>Automatically Collected Information</b><br/>
+        In addition, the Application may collect certain information automatically, including, but not limited to, the type of mobile device you use, your mobile devices unique device ID, the IP address of your mobile device, your mobile operating system, the type of mobile Internet browsers you use, and information about the way you use the Application.<br/><br/>
+        <b>Contact</b><br/>
+        If you have any questions regarding privacy while using the Application, or have questions about our practices, please contact us via email at dashdinanath056@gmail.com.
+        ]]>
+    </string>
+
+    <string name="license_text">
+        <![CDATA[
+        <b>MIT License</b><br/><br/>
+        Copyright (c) 2025 Dinanath Dash<br/><br/>
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:<br/><br/>
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.<br/><br/>
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        ]]>
+    </string>
+    
+    <string name="open_source_licenses_text">
+        <![CDATA[
+        <b>Open Source Libraries</b><br/><br/>
+        <b>Apache POI</b><br/>
+        Apache License 2.0<br/>
+        https://poi.apache.org/<br/><br/>
+        <b>PDFBox</b><br/>
+        Apache License 2.0<br/>
+        https://pdfbox.apache.org/<br/><br/>
+        <b>Android Jetpack</b><br/>
+        Apache License 2.0<br/>
+        https://developer.android.com/jetpack<br/><br/>
+        <b>Material Components</b><br/>
+        Apache License 2.0<br/>
+        https://github.com/material-components/material-components-android
+        ]]>
+    </string>
+</resources>

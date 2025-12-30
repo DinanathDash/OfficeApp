@@ -17,11 +17,9 @@
         android:background="@drawable/drag_handle"
         android:alpha="0.3"/>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
         android:paddingHorizontal="24dp"
         android:paddingBottom="12dp">
 
@@ -29,21 +27,30 @@
             android:id="@+id/tvDialogTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="Page Text"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"/>
+            android:textColor="@android:color/black"
+            android:includeFontPadding="false"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnClose"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_bias="0"/>
 
         <ImageButton
             android:id="@+id/btnClose"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@drawable/ic_close"
             app:tint="@android:color/black"
-            android:contentDescription="Close"/>
-    </LinearLayout>
+            android:contentDescription="Close"
+            android:scaleType="center"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

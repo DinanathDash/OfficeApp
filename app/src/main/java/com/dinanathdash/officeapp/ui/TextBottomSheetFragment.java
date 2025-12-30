@@ -11,21 +11,21 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.dinanathdash.officeapp.R;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.dinanathdash.officeapp.R;
 
-public class ExtractedTextBottomSheetFragment extends BottomSheetDialogFragment {
+public class TextBottomSheetFragment extends BottomSheetDialogFragment {
 
+    private static final String ARG_TITLE = "arg_title";
     private static final String ARG_TEXT = "arg_text";
-    private static final String ARG_PAGE_NUMBER = "arg_page_number";
 
-    public static ExtractedTextBottomSheetFragment newInstance(String text, int pageNumber) {
-        ExtractedTextBottomSheetFragment fragment = new ExtractedTextBottomSheetFragment();
+    public static TextBottomSheetFragment newInstance(String title, String text) {
+        TextBottomSheetFragment fragment = new TextBottomSheetFragment();
         Bundle args = new Bundle();
+        args.putString(ARG_TITLE, title);
         args.putString(ARG_TEXT, text);
-        args.putInt(ARG_PAGE_NUMBER, pageNumber);
         fragment.setArguments(args);
         return fragment;
     }
@@ -68,15 +68,20 @@ public class ExtractedTextBottomSheetFragment extends BottomSheetDialogFragment 
 
         if (getArguments() == null) return;
 
+        String title = getArguments().getString(ARG_TITLE);
         String text = getArguments().getString(ARG_TEXT);
-        int pageNumber = getArguments().getInt(ARG_PAGE_NUMBER);
 
         TextView tvTitle = view.findViewById(R.id.tvDialogTitle);
         TextView tvText = view.findViewById(R.id.tvExtractedText);
         View btnClose = view.findViewById(R.id.btnClose);
 
-        tvTitle.setText("Page " + (pageNumber + 1) + " Text");
-        tvText.setText(text);
+        tvTitle.setText(title);
+        // Support HTML content for licenses etc.
+        // Replace newlines with <br> to preserve formatting in HTML mode
+        if (text != null) {
+            text = text.replace("\n", "<br>");
+        }
+        tvText.setText(android.text.Html.fromHtml(text, android.text.Html.FROM_HTML_MODE_COMPACT));
         
         btnClose.setOnClickListener(v -> dismiss());
     }
