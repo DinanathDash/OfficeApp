@@ -62,7 +62,7 @@ jobs:
           MSG="${{ steps.commit_msg.outputs.msg }}"
           echo "Analyzing commit message: $MSG"
           
-          if [[ "$MSG" == *"BREAKING CHANGE"* ]] || [[ "$MSG" == *"!:"* ]]; then
+          if [[ "$MSG" == *"BREAKING CHANGE"* ]] || [[ "$MSG" == *"!:"* ]] || [[ "$MSG" == *"breaking change"* ]] || [[ "$MSG" == *"refactor"* ]]; then
             TYPE="major"
           elif [[ "$MSG" == feat* ]]; then
             TYPE="minor"
@@ -137,6 +137,10 @@ jobs:
             {
               "template": "#{{CHANGELOG}}",
               "categories": [
+                  {
+                      "title": "## 🚨 Breaking Changes",
+                      "labels": ["breaking change", "refactor"]
+                  },
                   {
                       "title": "## 🚀 Features",
                       "labels": ["feature", "feat"]
