@@ -159,13 +159,17 @@ public class FileUtils {
             File file = new File(uri.getPath());
             return file.exists();
         } else if ("content".equals(uri.getScheme())) {
-            try (Cursor cursor = context.getContentResolver().query(uri, 
-                    new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
-                return cursor != null && cursor.getCount() > 0;
+            try {
+                InputStream inputStream = context.getContentResolver().openInputStream(uri);
+                if (inputStream != null) {
+                    inputStream.close();
+                    return true;
+                }
             } catch (Exception e) {
-                // SecurityException or other issues -> assume not accessible/doesn't exist
+                // SecurityException, FileNotFoundException or other issues -> assume not accessible/doesn't exist
                 return false;
             }
+            return false;
         }
         return false;
     }

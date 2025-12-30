@@ -38,6 +38,7 @@
             android:padding="16dp"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
+            android:textIsSelectable="true"
             android:fontFamily="monospace" />
     </ScrollView>
 

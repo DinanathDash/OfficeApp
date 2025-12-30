@@ -19,7 +19,7 @@ import com.example.officeapp.utils.FileUtils;
 import com.google.android.material.tabs.TabLayout;
 
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -121,37 +121,82 @@ public class ExcelActivity extends AppCompatActivity {
         if (workbook == null) return;
         
         Sheet sheet = workbook.getSheetAt(sheetIndex);
+        DataFormatter formatter = new DataFormatter();
         
-        for (Row row : sheet) {
+        // 1. Calculate max column count across ALL rows to ensure rectangular grid
+        int maxColCount = 0;
+        int lastRowNum = sheet.getLastRowNum();
+        for (int i = 0; i <= lastRowNum; i++) {
+             Row row = sheet.getRow(i);
+             if (row != null) {
+                 int lastCell = row.getLastCellNum();
+                 if (lastCell > maxColCount) maxColCount = lastCell;
+             }
+        }
+        
+        // 2. Render Header Row (CORNER + A, B, C...)
+        TableRow headerRow = new TableRow(this);
+        
+        // Corner cell (Top-Left)
+        TextView cornerView = new TextView(this);
+        cornerView.setText("");
+        cornerView.setBackgroundResource(R.drawable.header_cell_bg);
+        headerRow.addView(cornerView);
+        
+        for(int c=0; c<maxColCount; c++) {
+            TextView colHeader = new TextView(this);
+            colHeader.setText(getColumnName(c));
+            colHeader.setGravity(android.view.Gravity.CENTER);
+            colHeader.setBackgroundResource(R.drawable.header_cell_bg);
+            colHeader.setTextColor(Color.BLACK);
+            colHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            headerRow.addView(colHeader);
+        }
+        tableLayout.addView(headerRow);
+        
+        // 3. Render Data Rows (1...N) + Data
+        for (int r = 0; r <= lastRowNum; r++) {
+            Row row = sheet.getRow(r);
             TableRow tableRow = new TableRow(this);
-            for (Cell cell : row) {
+            
+            // Row Header (1, 2, 3...)
+            TextView rowHeader = new TextView(this);
+            rowHeader.setText(String.valueOf(r + 1));
+            rowHeader.setGravity(android.view.Gravity.CENTER);
+            rowHeader.setBackgroundResource(R.drawable.header_cell_bg);
+            rowHeader.setTextColor(Color.BLACK);
+            rowHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            tableRow.addView(rowHeader);
+            
+            // Data Cells
+            for (int c = 0; c < maxColCount; c++) {
+                Cell cell = (row != null) ? row.getCell(c, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) : null;
+                
                 TextView textView = new TextView(this);
-                textView.setPadding(16, 16, 16, 16);
-                textView.setBackgroundResource(android.R.drawable.edit_text);
-                textView.setText(getCellValue(cell));
+                textView.setPadding(24, 16, 24, 16);
+                textView.setBackgroundResource(R.drawable.table_cell_bg);
+                textView.setTextColor(Color.BLACK);
+                textView.setTextSize(14f);
+                textView.setTextIsSelectable(true);
+                
+                String text = "";
+                if (cell != null) {
+                    text = formatter.formatCellValue(cell);
+                }
+                textView.setText(text);
                 tableRow.addView(textView);
             }
             tableLayout.addView(tableRow);
         }
     }
 
-    private String getCellValue(Cell cell) {
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
-                } else {
-                    return String.valueOf(cell.getNumericCellValue());
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                return cell.getCellFormula();
-            default:
-                return "";
+    private String getColumnName(int index) {
+        StringBuilder sb = new StringBuilder();
+        while (index >= 0) {
+            sb.insert(0, (char) ('A' + index % 26));
+            index = index / 26 - 1;
         }
+        return sb.toString();
     }
     
     private String currentQuery = "";

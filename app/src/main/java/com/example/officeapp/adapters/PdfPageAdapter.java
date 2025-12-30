@@ -23,6 +23,15 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
     private PdfRenderer pdfRenderer;
     private int pageCount;
     private ExecutorService executorService = Executors.newFixedThreadPool(4);
+    private OnPageLongClickListener longClickListener;
+
+    public interface OnPageLongClickListener {
+        void onPageLongClick(int pageIndex);
+    }
+
+    public void setOnPageLongClickListener(OnPageLongClickListener listener) {
+        this.longClickListener = listener;
+    }
 
     public PdfPageAdapter(PdfRenderer pdfRenderer) {
         this.pdfRenderer = pdfRenderer;
@@ -40,6 +49,14 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.pageNumber.setText("Page " + (position + 1));
         holder.imageView.setImageBitmap(null); // Clear previous
+        
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onPageLongClick(holder.getAdapterPosition());
+                return true;
+            }
+            return false;
+        });
 
         // Render Async
         executorService.execute(() -> {

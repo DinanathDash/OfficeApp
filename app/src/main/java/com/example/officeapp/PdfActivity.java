@@ -1,5 +1,6 @@
 package com.example.officeapp;
 
+import android.content.Context;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
 import android.view.ViewGroup;
@@ -79,6 +80,7 @@ public class PdfActivity extends AppCompatActivity {
         if (fileDescriptor != null) {
             pdfRenderer = new PdfRenderer(fileDescriptor);
             adapter = new PdfPageAdapter(pdfRenderer);
+            adapter.setOnPageLongClickListener(this::showPageTextDialog);
             recyclerView.setAdapter(adapter);
 
             if (pdfRenderer.getPageCount() == 1) {
@@ -91,6 +93,22 @@ public class PdfActivity extends AppCompatActivity {
                 recyclerView.setLayoutParams(params);
             }
         }
+    }
+
+    private void showPageTextDialog(int pageIndex) {
+        String text = pageTextMap.get(pageIndex);
+        if (text == null || text.trim().isEmpty()) {
+            if (!isTextExtracted) {
+                Toast.makeText(this, "Text extracting, please wait...", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "No text found on this page.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        com.example.officeapp.ui.ExtractedTextBottomSheetFragment fragment = 
+            com.example.officeapp.ui.ExtractedTextBottomSheetFragment.newInstance(text, pageIndex);
+        fragment.show(getSupportFragmentManager(), "ExtractedText");
     }
 
     private String currentQuery = "";
@@ -144,8 +162,9 @@ public class PdfActivity extends AppCompatActivity {
                 for (int i = 0; i < pageCount; i++) {
                     stripper.setStartPage(i + 1);
                     stripper.setEndPage(i + 1);
+                    stripper.setEndPage(i + 1);
                     String text = stripper.getText(document);
-                    pageTextMap.put(i, text.toLowerCase());
+                    pageTextMap.put(i, text); // Store original text
                     if (i % 5 == 0) android.util.Log.d("PdfActivity", "Extracted page " + i);
                 }
                 document.close();
@@ -174,7 +193,7 @@ public class PdfActivity extends AppCompatActivity {
         String lowerQuery = query.toLowerCase();
         
         for (Map.Entry<Integer, String> entry : pageTextMap.entrySet()) {
-            if (entry.getValue().contains(lowerQuery)) {
+            if (entry.getValue().toLowerCase().contains(lowerQuery)) {
                 searchResults.add(entry.getKey());
             }
         }
