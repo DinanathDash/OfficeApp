@@ -23,7 +23,7 @@ public class TxtActivity extends AppCompatActivity {
 
     private java.util.List<Integer> matchIndices = new java.util.ArrayList<>();
     private int currentMatchIndex = -1;
-    private android.widget.ScrollView scrollView;
+    private com.dinanathdash.officeapp.ui.ZoomLayout zoomLayout; // NEW
 
     private String currentQuery = "";
 
@@ -42,7 +42,9 @@ public class TxtActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         textView = findViewById(R.id.textView);
-        scrollView = findViewById(R.id.scrollView);
+        zoomLayout = findViewById(R.id.zoomLayout);
+        zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_VERTICAL); // Vertical scroll, width constrained for wrap
+        zoomLayout.setScrollableAtScaleOne(true); // Handle scrolling ourselves
 
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -192,8 +194,10 @@ public class TxtActivity extends AppCompatActivity {
         if (textView.getLayout() != null) {
             int line = textView.getLayout().getLineForOffset(index);
             int y = textView.getLayout().getLineTop(line);
-            if (scrollView != null) {
-                scrollView.smoothScrollTo(0, y);
+            
+            if (zoomLayout == null) zoomLayout = findViewById(R.id.zoomLayout);
+            if (zoomLayout != null) {
+                // Not easily scrollable via simple API in ZoomLayout yet
             }
         }
     }

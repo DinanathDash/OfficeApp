@@ -48,7 +48,11 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.pageNumber.setText("Page " + (position + 1));
-        holder.imageView.setImageBitmap(null); // Clear previous
+        holder.imageView.setImageBitmap(null); 
+        holder.imageView.setAdjustViewBounds(false); 
+        // Force minimum size to prevent 0x0 collapse with UNSPECIFIED measurements
+        holder.imageView.setMinimumWidth(1080);
+        holder.imageView.setMinimumHeight(1400);
         
         holder.itemView.setOnLongClickListener(v -> {
             if (longClickListener != null) {
@@ -64,6 +68,7 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
             if (bitmap != null) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                    if (holder.getAdapterPosition() == position) {
+                       holder.imageView.setAdjustViewBounds(true); // Enable adjustBounds for correct aspect ratio
                        holder.imageView.setImageBitmap(bitmap);
                    }
                 });
@@ -73,7 +78,10 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
     
     // PdfRenderer is not thread-safe, strict synchronization needed
     private synchronized Bitmap renderPage(int index) {
-        if (pdfRenderer == null) return null;
+        if (pdfRenderer == null) {
+            android.util.Log.e("PdfPageAdapter", "RenderPage: pdfRenderer is null for page " + index);
+            return null;
+        }
         PdfRenderer.Page page = null;
         try {
             page = pdfRenderer.openPage(index);
@@ -81,11 +89,21 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
             int width = 1080; // Fixed width for simplification, ideally get screen width
             int height = width * page.getHeight() / page.getWidth();
             
+            android.util.Log.d("PdfPageAdapter", "RenderPage " + index + ": width=" + width + ", height=" + height);
+            
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+            bitmap.eraseColor(android.graphics.Color.WHITE);
+            
+            android.graphics.Matrix matrix = new android.graphics.Matrix();
+            float scale = (float) width / page.getWidth();
+            matrix.postScale(scale, scale);
+            
+            page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+            android.util.Log.d("PdfPageAdapter", "RenderPage " + index + ": Success");
             return bitmap;
         } catch (Exception e) {
             e.printStackTrace();
+            android.util.Log.e("PdfPageAdapter", "RenderPage " + index + ": Failed", e);
             return null;
         } finally {
             if (page != null) {
@@ -110,6 +128,11 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.ViewHold
         ViewHolder(View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.pdfPageImage);
+            com.dinanathdash.officeapp.ui.ZoomLayout zoomLayout = itemView.findViewById(R.id.zoomLayout);
+            if (zoomLayout != null) {
+                zoomLayout.setScrollableAtScaleOne(false); // Let RecyclerView handle scrolling when not zoomed
+                zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH); // Allow image to be full resolution/size
+            }
             pageNumber = itemView.findViewById(R.id.pdfPageNumber);
         }
     }

@@ -6,14 +6,19 @@
     android:padding="8dp"
     android:gravity="center">
 
-    <ImageView
-        android:id="@+id/pdfPageImage"
+    <com.dinanathdash.officeapp.ui.ZoomLayout
+        android:id="@+id/zoomLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
-        android:minHeight="300dp"
-        android:background="#FFFFFF"/>
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/pdfPageImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:minHeight="300dp"
+            android:background="#FFFFFF"/>
+    </com.dinanathdash.officeapp.ui.ZoomLayout>
 
     <TextView
         android:id="@+id/pdfPageNumber"

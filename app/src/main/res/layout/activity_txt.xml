@@ -24,8 +24,8 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <ScrollView
-        android:id="@+id/scrollView"
+    <com.dinanathdash.officeapp.ui.ZoomLayout
+        android:id="@+id/zoomLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -40,6 +40,6 @@
             android:textSize="14sp"
             android:textIsSelectable="true"
             android:fontFamily="monospace" />
-    </ScrollView>
+    </com.dinanathdash.officeapp.ui.ZoomLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

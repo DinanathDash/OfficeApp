@@ -114,6 +114,11 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
             tvContent = itemView.findViewById(R.id.tvContent);
             tvNotes = itemView.findViewById(R.id.tvNotes);
             layoutNotes = itemView.findViewById(R.id.layoutNotes);
+            com.dinanathdash.officeapp.ui.ZoomLayout zoomLayout = itemView.findViewById(R.id.zoomLayout);
+            if (zoomLayout != null) {
+                zoomLayout.setScrollableAtScaleOne(false); // Let RecyclerView handle scrolling when not zoomed
+                zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH); // Allow content to be full size
+            }
         }
     }
 }
