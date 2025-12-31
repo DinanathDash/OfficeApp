@@ -108,36 +108,6 @@ jobs:
           # Set output for next steps
           echo "version_name=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Generate Changelog
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@v4
-        with:
-          configuration: |
-            {
-              "template": "#{{CHANGELOG}}",
-              "categories": [
-                  {
-                      "title": "## 🚨 Breaking Changes",
-                      "labels": ["breaking change", "refactor"]
-                  },
-                  {
-                      "title": "## 🚀 Features",
-                      "labels": ["feature", "feat"]
-                  },
-                  {
-                      "title": "## 🐛 Fixes",
-                      "labels": ["fix", "bug"]
-                  },
-                  {
-                      "title": "## 📦 Other",
-                      "labels": []
-                  }
-              ]
-            }
-          mode: "COMMIT"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Commit and Push Version Bump
         run: |
           git config --global user.name 'GitHub Actions'
@@ -166,8 +136,7 @@ jobs:
           name: Release v${{ steps.bump_version.outputs.version_name }}
           body: |
             ${{ inputs.release_note != '' && inputs.release_note || steps.commit_msg.outputs.msg }}
-            
-            ${{ steps.changelog.outputs.changelog }}
+
           files: app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

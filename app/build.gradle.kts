@@ -21,7 +21,7 @@ android {
         }
 
         applicationId = "com.dinanathdash.officeapp"
-        minSdk = 32
+        minSdk = 31
         targetSdk = 36
         versionCode = (versionProps["VERSION_CODE"] as String? ?: "1").toInt()
         versionName = "${versionProps["VERSION_MAJOR"]}.${versionProps["VERSION_MINOR"]}.${versionProps["VERSION_PATCH"]}"
