@@ -110,33 +110,25 @@ jobs:
 
       - name: Generate Changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v4
-        with:
-          configuration: |
-            {
-              "template": "#{{CHANGELOG}}",
-              "categories": [
-                  {
-                      "title": "## 🚨 Breaking Changes",
-                      "labels": ["breaking change", "refactor"]
-                  },
-                  {
-                      "title": "## 🚀 Features",
-                      "labels": ["feature", "feat"]
-                  },
-                  {
-                      "title": "## 🐛 Fixes",
-                      "labels": ["fix", "bug"]
-                  },
-                  {
-                      "title": "## 📦 Other",
-                      "labels": []
-                  }
-              ]
-            }
-          mode: "COMMIT"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "Previous tag: $PREV_TAG"
+          
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tags found. listing all commits."
+            CHANGELOG=$(git log --pretty=format:"* %s (%h)")
+          else
+            echo "Generating changelog since $PREV_TAG"
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"* %s (%h)")
+          fi
+          
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="* No changes found in commit history."
+          fi
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Commit and Push Version Bump
         run: |
