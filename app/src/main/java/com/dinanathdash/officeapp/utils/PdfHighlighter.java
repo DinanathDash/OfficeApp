@@ -214,7 +214,7 @@ public class PdfHighlighter extends PDFTextStripper {
                             // "y" is the baseline. 
                             float top = y - h;
                             
-                            RectF r = new RectF(x, top, x + w, y + 2); // +2 for descendents/padding
+                            RectF r = new RectF(x, top - 4, x + w, y + 4); // Increased height for better visibility
                             
                             if (unionRect == null) {
                                 unionRect = new RectF(r);

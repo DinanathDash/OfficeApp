@@ -46,15 +46,7 @@ public class TxtActivity extends AppCompatActivity {
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_VERTICAL); // Vertical scroll, width constrained for wrap
         zoomLayout.setScrollableAtScaleOne(true); // Handle scrolling ourselves
         
-        zoomLayout.setOnLongClickListener(v -> {
-            if (fullText != null && !fullText.isEmpty()) {
-                com.dinanathdash.officeapp.ui.TextBottomSheetFragment fragment = 
-                    com.dinanathdash.officeapp.ui.TextBottomSheetFragment.newInstance("File Text", fullText);
-                fragment.show(getSupportFragmentManager(), "ExtractedText");
-                return true;
-            }
-            return false;
-        });
+
 
         Uri uri = getIntent().getData();
         if (uri != null) {

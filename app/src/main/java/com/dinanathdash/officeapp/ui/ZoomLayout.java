@@ -72,6 +72,7 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
     private void init(Context context) {
         scaleDetector = new ScaleGestureDetector(context, this);
         scroller = new OverScroller(context);
+        touchSlop = android.view.ViewConfiguration.get(context).getScaledTouchSlop();
         
         // Ensure we can receive long clicks
         setLongClickable(true);
@@ -234,11 +235,68 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
         }
     }
 
+    private int touchSlop;
+    private float lastTouchX;
+    private float lastTouchY;
+    private boolean isDragging;
+
+    // ... (constructors call init)
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (scale > 1.0f) return true;
+        // Updated: Removed the scale > 1.0f check to allow child interaction (selection) when zoomed.
+        // if (scale > 1.0f) return true;
+        
         if (ev.getPointerCount() > 1) return true;
-        return scrollableAtScaleOne;
+        
+        final int action = ev.getAction() & MotionEvent.ACTION_MASK;
+        
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                lastTouchX = ev.getX();
+                lastTouchY = ev.getY();
+                isDragging = false;
+                
+                // If we are currently flinging, we need to intercept immediately so we can
+                // stop the fling and potentially start a new drag.
+                if (!scroller.isFinished()) {
+                    isDragging = true;
+                    return true;
+                }
+                
+                // Don't intercept DOWN, let child have it. 
+                break;
+                
+            case MotionEvent.ACTION_MOVE:
+                if (isDragging) return true; // Already dragging
+                
+                final float x = ev.getX();
+                final float y = ev.getY();
+                final float xDiff = Math.abs(x - lastTouchX);
+                final float yDiff = Math.abs(y - lastTouchY);
+                
+                if (xDiff > touchSlop || yDiff > touchSlop) {
+                    isDragging = true;
+                    
+                    // Synthesize a DOWN event for the detectors because they missed the actual DOWN
+                    // (it was consumed by the child). This ensures smooth panning initialization.
+                    MotionEvent downEvent = MotionEvent.obtain(ev.getDownTime(), ev.getEventTime(), 
+                            MotionEvent.ACTION_DOWN, lastTouchX, lastTouchY, 0);
+                    scaleDetector.onTouchEvent(downEvent);
+                    gestureDetector.onTouchEvent(downEvent);
+                    downEvent.recycle();
+
+                    return true; // Start intercepting
+                }
+                break;
+                
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                isDragging = false;
+                break;
+        }
+        
+        return isDragging;
     }
     
     @Override

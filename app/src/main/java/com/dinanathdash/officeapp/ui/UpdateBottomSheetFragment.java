@@ -48,8 +48,8 @@ public class UpdateBottomSheetFragment extends BottomSheetDialogFragment {
             BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) d;
             FrameLayout bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
-                // Set background to transparent so our custom drawable with rounded corners shows
-                bottomSheet.setBackgroundResource(android.R.color.transparent);
+                // Set background to our custom drawable so it extends behind the nav bar
+                bottomSheet.setBackgroundResource(R.drawable.rounded_bottom_sheet_bg);
                 
                 // Set background of the content view to our drawable (optional depending on how layout is inflated, but good practice per reference)
                 // Actually the layout root has the background, so we just need transparent container

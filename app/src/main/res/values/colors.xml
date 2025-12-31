@@ -37,6 +37,6 @@
     <color name="txt_highlight_active">#9E9E9E</color>
 
     <!-- PDF (Toolbar: #ABD1FF) -->
-    <color name="pdf_highlight">#4DABD1FF</color>
+    <color name="pdf_highlight">#800066FF</color>
     <color name="pdf_highlight_active">#ABD1FF</color>
 </resources>

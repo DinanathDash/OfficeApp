@@ -6,6 +6,7 @@
         <item name="colorSecondary">@color/primary_blue</item>
         <item name="colorAccent">@color/primary_blue</item>
         <item name="colorPrimary">@color/primary_blue</item>
+        <item name="searchViewStyle">@style/CustomSearchView</item>
     </style>
 
     <style name="Theme.OfficeApp" parent="Base.Theme.OfficeApp" />
@@ -27,6 +28,7 @@
         <item name="colorSecondary">@color/primary_blue</item>
         <item name="colorAccent">@color/primary_blue</item>
         <item name="android:windowBackground">@color/bg_gray</item>
+        <item name="searchViewStyle">@style/CustomSearchView</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Word" parent="Theme.OfficeApp.Viewer">
@@ -85,5 +87,15 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
         <item name="android:background">#E0E0E0</item> <!-- Light Gray Divider -->
+    </style>
+
+    <style name="CustomSearchView" parent="Widget.AppCompat.SearchView">
+        <item name="searchIcon">@drawable/ic_search</item>
+        <item name="searchHintIcon">@null</item>
+        <item name="queryHint">Search</item>
+    </style>
+
+    <style name="Toolbar.Dark" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="searchViewStyle">@style/CustomSearchView</item>
     </style>
 </resources>
