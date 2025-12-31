@@ -3,7 +3,6 @@ package com.dinanathdash.officeapp.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,13 +10,26 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dinanathdash.officeapp.R;
 import com.dinanathdash.officeapp.data.Slide;
+import com.dinanathdash.officeapp.ui.SlideView;
 
 import java.util.List;
 
-public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder> {
+import com.dinanathdash.officeapp.ui.GlobalZoomHelper;
+
+public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder> implements GlobalZoomHelper.ZoomableAdapter {
 
     private List<Slide> slides;
     private String searchQuery = "";
+    private int highlightColor = 0;
+    private int activeHighlightColor = 0;
+    
+    private float globalScale = 1.0f;
+
+    @Override
+    public void setGlobalScale(float scale) {
+        this.globalScale = scale;
+        notifyDataSetChanged();
+    }
 
     public SlidesAdapter(List<Slide> slides) {
         this.slides = slides;
@@ -30,6 +42,13 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
     
     public void setSearchQuery(String query) {
         this.searchQuery = query;
+        // Search inside SlideView not fully implemented visually yet, but we keep the robust query field
+        notifyDataSetChanged();
+    }
+
+    public void setHighlightColors(int highlight, int active) {
+        this.highlightColor = highlight;
+        this.activeHighlightColor = active;
         notifyDataSetChanged();
     }
 
@@ -41,7 +60,7 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
     }
 
     private int activeSlidePos = -1;
-    private int activeFieldType = -1; // 0=Title, 1=Content, 2=Notes
+    private int activeFieldType = -1; 
     private int activeChaIndex = -1;
 
     public void setActiveMatch(int slidePos, int fieldType, int charIndex) {
@@ -57,45 +76,32 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
         
         holder.tvSlideNumber.setText("Slide " + slide.getSlideNumber());
         
-        if (slide.getTitle() == null || slide.getTitle().isEmpty()) {
-            holder.tvTitle.setVisibility(View.GONE);
-        } else {
-            holder.tvTitle.setVisibility(View.VISIBLE);
-            setHighlightedText(holder.tvTitle, slide.getTitle(), position, 0);
-        }
-        
-        setHighlightedText(holder.tvContent, slide.getContent(), position, 1);
-        
-        if (slide.getNotes() == null || slide.getNotes().trim().isEmpty()) {
-            holder.layoutNotes.setVisibility(View.GONE);
-        } else {
-            holder.layoutNotes.setVisibility(View.VISIBLE);
-            setHighlightedText(holder.tvNotes, slide.getNotes(), position, 2);
-        }
-    }
-    
-    private void setHighlightedText(TextView textView, String text, int slidePos, int fieldType) {
-        if (text == null) text = "";
-        
-        if (searchQuery.isEmpty()) {
-            textView.setText(text);
-            return;
+        // Apply global scale
+        ViewGroup.LayoutParams params = holder.slideView.getLayoutParams();
+        if (params != null) {
+            int baseWidth = holder.itemView.getContext().getResources().getDisplayMetrics().widthPixels;
+            // Subtract margins if any (CardView margins = 16dp total?)
+            // Ideally we measure available width, but baseWidth is a good enough proxy for fullscreen
+            int targetWidth = (int) ((baseWidth - 40) * globalScale); // 40px approximate padding/margin
+            if (targetWidth < baseWidth - 40) targetWidth = baseWidth - 40;
+            
+            params.width = targetWidth;
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT; // SlideView calculates height based on width
+            holder.slideView.setLayoutParams(params);
         }
 
-        android.text.SpannableString spannableString = new android.text.SpannableString(text);
-        String lowerCaseText = text.toLowerCase();
-        String lowerCaseQuery = searchQuery.toLowerCase();
-        int index = lowerCaseText.indexOf(lowerCaseQuery);
-        
-        while (index >= 0) {
-            boolean isActive = (slidePos == activeSlidePos && fieldType == activeFieldType && index == activeChaIndex);
-            int colorRes = isActive ? R.color.search_highlight_active : R.color.search_highlight;
-            
-            spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(textView.getContext(), colorRes)), 
-                    index, index + searchQuery.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            index = lowerCaseText.indexOf(lowerCaseQuery, index + searchQuery.length());
+        holder.slideView.setSlide(slide);
+        holder.slideView.setSearchQuery(searchQuery);
+        if (highlightColor != 0) {
+            holder.slideView.setHighlightColors(highlightColor, activeHighlightColor);
         }
-        textView.setText(spannableString);
+        
+        holder.slideView.setOnContentLongClickListener((text) -> {
+            if (holder.itemView.getContext() instanceof com.dinanathdash.officeapp.PptActivity) {
+                ((com.dinanathdash.officeapp.PptActivity) holder.itemView.getContext())
+                    .showTextDialog("Slide " + slide.getSlideNumber() + " Text", text);
+            }
+        });
     }
 
     @Override
@@ -104,21 +110,13 @@ public class SlidesAdapter extends RecyclerView.Adapter<SlidesAdapter.ViewHolder
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvSlideNumber, tvTitle, tvContent, tvNotes;
-        LinearLayout layoutNotes;
+        TextView tvSlideNumber;
+        SlideView slideView;
 
         ViewHolder(View itemView) {
             super(itemView);
             tvSlideNumber = itemView.findViewById(R.id.tvSlideNumber);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvContent = itemView.findViewById(R.id.tvContent);
-            tvNotes = itemView.findViewById(R.id.tvNotes);
-            layoutNotes = itemView.findViewById(R.id.layoutNotes);
-            com.dinanathdash.officeapp.ui.ZoomLayout zoomLayout = itemView.findViewById(R.id.zoomLayout);
-            if (zoomLayout != null) {
-                zoomLayout.setScrollableAtScaleOne(false); // Let RecyclerView handle scrolling when not zoomed
-                zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH); // Allow content to be full size
-            }
+            slideView = itemView.findViewById(R.id.slideView);
         }
     }
 }

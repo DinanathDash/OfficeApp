@@ -32,16 +32,22 @@
     <style name="Theme.OfficeApp.Viewer.Word" parent="Theme.OfficeApp.Viewer">
         <item name="colorPrimary">@color/word_primary</item>
         <item name="android:statusBarColor">@color/word_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Excel" parent="Theme.OfficeApp.Viewer">
         <item name="colorPrimary">@color/excel_primary</item>
         <item name="android:statusBarColor">@color/excel_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Ppt" parent="Theme.OfficeApp.Viewer">
         <item name="colorPrimary">@color/ppt_primary</item>
         <item name="android:statusBarColor">@color/ppt_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Pdf" parent="Theme.OfficeApp.Viewer">

@@ -19,4 +19,24 @@
     <color name="text_file_primary">#9E9E9E</color>
     <color name="search_highlight">#ABD1FF</color>
     <color name="search_highlight_active">#0066FF</color>
+    <color name="excel_highlight_bg">#E8F6F0</color>
+    <color name="excel_highlight_stroke">#85C8A8</color>
+    <color name="excel_highlight_active_bg">#D1EBE1</color>
+
+    <!-- Specific Highlight Colors -->
+    <!-- PPT (Toolbar: #D35230) -->
+    <color name="ppt_highlight">#4DD35230</color> <!-- 30% Opacity -->
+    <color name="ppt_highlight_active">#D35230</color>
+
+    <!-- Word (Toolbar: #2B7CD3) -->
+    <color name="word_highlight">#4D2B7CD3</color>
+    <color name="word_highlight_active">#2B7CD3</color>
+
+    <!-- TXT (Toolbar: #9E9E9E) -->
+    <color name="txt_highlight">#4D9E9E9E</color>
+    <color name="txt_highlight_active">#9E9E9E</color>
+
+    <!-- PDF (Toolbar: #ABD1FF) -->
+    <color name="pdf_highlight">#4DABD1FF</color>
+    <color name="pdf_highlight_active">#ABD1FF</color>
 </resources>

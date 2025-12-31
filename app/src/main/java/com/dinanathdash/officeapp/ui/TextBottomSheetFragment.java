@@ -82,7 +82,7 @@ public class TextBottomSheetFragment extends BottomSheetDialogFragment {
             text = text.replace("\n", "<br>");
         }
         tvText.setText(android.text.Html.fromHtml(text, android.text.Html.FROM_HTML_MODE_COMPACT));
-        
+
         btnClose.setOnClickListener(v -> dismiss());
     }
 }

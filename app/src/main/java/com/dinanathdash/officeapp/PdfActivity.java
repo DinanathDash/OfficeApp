@@ -19,6 +19,8 @@ import com.dinanathdash.officeapp.utils.FileUtils;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.text.PDFTextStripper;
+import com.dinanathdash.officeapp.utils.PdfHighlighter;
+import android.graphics.RectF;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -39,6 +41,18 @@ public class PdfActivity extends AppCompatActivity {
     private boolean isTextExtracted = false;
     private List<Integer> searchResults = new ArrayList<>();
     private int currentSearchIndex = -1;
+    
+    // Holding document for coordinate extraction. 
+    // WARNING: Memory intensive? PDDocument can be large.
+    // Ideally we should reload page-by-page or cache coordinates.
+    // For simplicity in this implementation, we keep it open or reload it.
+    // Reloading per page render might be slow.
+    // Let's keep a reference but ensure we close it.
+    private PDDocument pdDocument;
+    private PdfHighlighter highlighter;
+    private Uri currentUri;
+    
+    private com.dinanathdash.officeapp.ui.GlobalZoomHelper globalZoomHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +78,10 @@ public class PdfActivity extends AppCompatActivity {
             getSupportActionBar().setTitle(fileName);
             try {
                 openRenderer(uri);
+                openRenderer(uri);
+                // openRenderer(uri) might fail if fileDescriptor is null, but we check.
+                // We also need to open PDDocument for extraction.
+                loadPdfDocument(uri);
                 extractText(uri);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -92,7 +110,18 @@ public class PdfActivity extends AppCompatActivity {
                 params.height = ViewGroup.LayoutParams.MATCH_PARENT; 
                 recyclerView.setLayoutParams(params);
             }
+            
+            // Initialize Global Zoom
+            globalZoomHelper = new com.dinanathdash.officeapp.ui.GlobalZoomHelper(this, recyclerView, adapter);
         }
+    }
+    
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (globalZoomHelper != null) {
+            globalZoomHelper.processTouchEvent(ev);
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private void showPageTextDialog(int pageIndex) {
@@ -136,47 +165,84 @@ public class PdfActivity extends AppCompatActivity {
             public boolean onQueryTextChange(String newText) {
                 // Return true to indicate we handled it (by ignoring live search).
                 // We do NOT update currentQuery here, otherwise submit will think we already searched it.
+                // However, for highlighting to disappear when clearing:
+                if (newText.isEmpty() && !currentQuery.isEmpty()) {
+                   currentQuery = "";
+                   adapter.setSearchQuery("", null);
+                }
                 return true; 
             }
         });
 
         searchView.setOnCloseListener(() -> {
             searchResults.clear();
+            searchResults.clear();
             currentSearchIndex = -1;
             currentQuery = "";
+            adapter.setSearchQuery("", null);
             return false;
         });
         
         return true;
     }
     
+    private void loadPdfDocument(Uri uri) {
+        currentUri = uri;
+        new Thread(() -> {
+            try {
+                 InputStream inputStream = getContentResolver().openInputStream(uri);
+                 pdDocument = PDDocument.load(inputStream);
+                 highlighter = new PdfHighlighter();
+                 
+                 // Pass document to adapter
+                 runOnUiThread(() -> {
+                     if (adapter != null) {
+                         adapter.setPdfDocument(pdDocument, highlighter);
+                         // Set colors
+                         adapter.setHighlightColors(
+                            androidx.core.content.ContextCompat.getColor(this, R.color.pdf_highlight),
+                            androidx.core.content.ContextCompat.getColor(this, R.color.pdf_highlight_active)
+                         );
+                     }
+                 });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private void extractText(Uri uri) {
         new Thread(() -> {
             try {
+                // Use a separate document instance for bulk extraction to avoid threading issues if possible,
+                // or just wait for loadPdfDocument.
+                // Actually, PDDocument is not thread safe.
+                // We should perform extraction on the same pdDocument instance if it's already loaded?
+                // Or load a new one just for this one-off extraction. 
+                // Loading a new one is safer for concurrency with the adapter/rendering thread if that ever accesses it.
+                // But PDFBox memory usage is high.
+                // Let's load a separate one for extraction and close it immediately.
+                
                 InputStream inputStream = getContentResolver().openInputStream(uri);
-                PDDocument document = PDDocument.load(inputStream);
+                PDDocument extractionDoc = PDDocument.load(inputStream);
                 PDFTextStripper stripper = new PDFTextStripper();
                 
-                int pageCount = document.getNumberOfPages();
+                int pageCount = extractionDoc.getNumberOfPages();
                 android.util.Log.d("PdfActivity", "Starting extraction for " + pageCount + " pages");
                 for (int i = 0; i < pageCount; i++) {
                     stripper.setStartPage(i + 1);
                     stripper.setEndPage(i + 1);
-                    stripper.setEndPage(i + 1);
-                    String text = stripper.getText(document);
-                    pageTextMap.put(i, text); // Store original text
-                    if (i % 5 == 0) android.util.Log.d("PdfActivity", "Extracted page " + i);
+                    String text = stripper.getText(extractionDoc);
+                    pageTextMap.put(i, text); 
                 }
-                document.close();
+                extractionDoc.close();
                 isTextExtracted = true;
-                android.util.Log.d("PdfActivity", "Extraction complete");
                 
                 new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> 
                     Toast.makeText(PdfActivity.this, "Search index ready", Toast.LENGTH_SHORT).show());
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                android.util.Log.e("PdfActivity", "Extraction failed", e);
             }
         }).start();
     }
@@ -205,7 +271,13 @@ public class PdfActivity extends AppCompatActivity {
             // Found matches
             currentSearchIndex = 0;
             scrollToPage(searchResults.get(0));
+            // Found matches
+            currentSearchIndex = 0;
+            scrollToPage(searchResults.get(0));
             Toast.makeText(this, "Found on page " + (searchResults.get(0) + 1) + " (" + searchResults.size() + " matches)", Toast.LENGTH_SHORT).show();
+            
+            // Pass query to adapter to start highlighting
+            adapter.setSearchQuery(query, searchResults);
         }
     }
 
@@ -248,6 +320,9 @@ public class PdfActivity extends AppCompatActivity {
             }
             if (fileDescriptor != null) {
                 fileDescriptor.close();
+            }
+            if (pdDocument != null) {
+                pdDocument.close();
             }
         } catch (IOException e) {
             e.printStackTrace();

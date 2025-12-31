@@ -73,7 +73,18 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
         scaleDetector = new ScaleGestureDetector(context, this);
         scroller = new OverScroller(context);
         
+        // Ensure we can receive long clicks
+        setLongClickable(true);
+
         gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public void onLongPress(MotionEvent e) {
+                if (mode == Mode.NONE) {
+                    performLongClick(); // This calls the OnLongClickListener
+                    performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                }
+            }
+
             @Override
             public boolean onDoubleTap(MotionEvent e) {
                 if (scale > 1.0f) {
@@ -328,6 +339,20 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
         child.setTranslationY(dy);
     }
     
+    public void scrollToPosition(float x, float y, boolean animate) {
+        float targetDx = -x * scale;
+        float targetDy = -y * scale;
+        
+        if (animate) {
+            // Simple animation or just reuse the scale animation helper with current scale
+            animateScaleAndTranslation(this.scale, targetDx, targetDy);
+        } else {
+            this.dx = targetDx;
+            this.dy = targetDy;
+            applyScaleAndTranslation();
+        }
+    }
+
     private void animateScaleAndTranslation(float targetScale, float targetDx, float targetDy) {
         this.scale = targetScale;
         this.dx = targetDx;

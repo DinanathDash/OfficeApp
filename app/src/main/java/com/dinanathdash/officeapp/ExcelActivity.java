@@ -60,6 +60,10 @@ public class ExcelActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH);
+        
+
+        
+
 
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -199,6 +203,33 @@ public class ExcelActivity extends AppCompatActivity {
         return sb.toString();
     }
     
+    private String extractSheetText(int sheetIndex) {
+        if (workbook == null) return "";
+        Sheet sheet = workbook.getSheetAt(sheetIndex);
+        StringBuilder sb = new StringBuilder();
+        DataFormatter formatter = new DataFormatter();
+        
+        int lastRowNum = sheet.getLastRowNum();
+        for (int i = 0; i <= lastRowNum; i++) {
+             Row row = sheet.getRow(i);
+             if (row != null) {
+                 boolean firstCell = true;
+                 for (int c = 0; c < row.getLastCellNum(); c++) {
+                     Cell cell = row.getCell(c, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                     if (!firstCell) sb.append("\t");
+                     if (cell != null) {
+                         sb.append(formatter.formatCellValue(cell));
+                     }
+                     firstCell = false;
+                 }
+             }
+             sb.append("\n");
+        }
+        return sb.toString();
+    }
+    
+
+    
     private String currentQuery = "";
 
     @Override
@@ -265,9 +296,9 @@ public class ExcelActivity extends AppCompatActivity {
                         
                         if (hasQuery && text.contains(queryLower)) {
                             matchViews.add(textView);
-                            textView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(ExcelActivity.this, R.color.search_highlight));
+                            textView.setBackgroundResource(R.drawable.excel_highlight_bg);
                         } else {
-                            textView.setBackgroundResource(android.R.drawable.edit_text);
+                            textView.setBackgroundResource(R.drawable.table_cell_bg);
                         }
                     }
                 }
@@ -277,7 +308,7 @@ public class ExcelActivity extends AppCompatActivity {
         if (!matchViews.isEmpty()) {
             currentMatchIndex = 0;
             // set active
-            matchViews.get(0).setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active));
+            matchViews.get(0).setBackgroundResource(R.drawable.excel_highlight_active_bg);
             scrollToView(matchViews.get(0));
         }
     }
@@ -294,7 +325,7 @@ public class ExcelActivity extends AppCompatActivity {
         lastNavTime = currentTime;
         
         // De-highlight current active (set back to normal match highlight)
-        matchViews.get(currentMatchIndex).setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight));
+        matchViews.get(currentMatchIndex).setBackgroundResource(R.drawable.excel_highlight_bg);
         
         int oldIndex = currentMatchIndex;
         currentMatchIndex += direction;
@@ -304,7 +335,7 @@ public class ExcelActivity extends AppCompatActivity {
         android.util.Log.d("ExcelActivity", "Navigating: " + oldIndex + " -> " + currentMatchIndex + " (Total: " + matchViews.size() + ")");
 
         // Highlight new active
-        matchViews.get(currentMatchIndex).setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active));
+        matchViews.get(currentMatchIndex).setBackgroundResource(R.drawable.excel_highlight_active_bg);
         scrollToView(matchViews.get(currentMatchIndex));
     }
     

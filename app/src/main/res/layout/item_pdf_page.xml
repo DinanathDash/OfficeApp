@@ -6,7 +6,7 @@
     android:padding="8dp"
     android:gravity="center">
 
-    <com.dinanathdash.officeapp.ui.ZoomLayout
+    <FrameLayout
         android:id="@+id/zoomLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -18,7 +18,7 @@
             android:scaleType="fitCenter"
             android:minHeight="300dp"
             android:background="#FFFFFF"/>
-    </com.dinanathdash.officeapp.ui.ZoomLayout>
+    </FrameLayout>
 
     <TextView
         android:id="@+id/pdfPageNumber"

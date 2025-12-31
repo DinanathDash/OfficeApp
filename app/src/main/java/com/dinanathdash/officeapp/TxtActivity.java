@@ -45,6 +45,16 @@ public class TxtActivity extends AppCompatActivity {
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_VERTICAL); // Vertical scroll, width constrained for wrap
         zoomLayout.setScrollableAtScaleOne(true); // Handle scrolling ourselves
+        
+        zoomLayout.setOnLongClickListener(v -> {
+            if (fullText != null && !fullText.isEmpty()) {
+                com.dinanathdash.officeapp.ui.TextBottomSheetFragment fragment = 
+                    com.dinanathdash.officeapp.ui.TextBottomSheetFragment.newInstance("File Text", fullText);
+                fragment.show(getSupportFragmentManager(), "ExtractedText");
+                return true;
+            }
+            return false;
+        });
 
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -139,14 +149,14 @@ public class TxtActivity extends AppCompatActivity {
             
             while (index >= 0) {
                 matchIndices.add(index);
-                spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight)), 
+                spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.txt_highlight)), 
                         index, index + query.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 index = lowerCaseText.indexOf(lowerCaseQuery, index + query.length());
             }
             
             if (!matchIndices.isEmpty()) {
                 currentMatchIndex = 0;
-                spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active)), 
+                spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.txt_highlight_active)), 
                         matchIndices.get(0), matchIndices.get(0) + query.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 scrollToMatch(matchIndices.get(0));
             }
@@ -175,13 +185,13 @@ public class TxtActivity extends AppCompatActivity {
         
         // Re-highlight all
         for (int idx : matchIndices) {
-             spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight)), 
+             spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.txt_highlight)), 
                     idx, idx + qLen, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         
         // Highlight active
         int activeIdx = matchIndices.get(currentMatchIndex);
-        spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.search_highlight_active)), 
+        spannableString.setSpan(new android.text.style.BackgroundColorSpan(androidx.core.content.ContextCompat.getColor(this, R.color.txt_highlight_active)), 
                 activeIdx, activeIdx + qLen, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         
         textView.setText(spannableString);

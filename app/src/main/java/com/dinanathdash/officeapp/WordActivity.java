@@ -63,6 +63,15 @@ public class WordActivity extends AppCompatActivity {
         }
     }
 
+    private String getCssColor(int resId) {
+        int color = androidx.core.content.ContextCompat.getColor(this, resId);
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        double a = ((color >>> 24) & 0xFF) / 255.0;
+        return String.format(java.util.Locale.US, "rgba(%d, %d, %d, %.2f)", r, g, b, a);
+    }
+
     private String escapeJsString(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")
@@ -150,8 +159,8 @@ public class WordActivity extends AppCompatActivity {
                           .append("table { border-collapse: collapse; width: 100%; border: 1px solid #ccc; }")
                           .append("td, th { border: 1px solid #ccc; padding: 8px; }")
                           .append("img { max-width: 100%; height: auto; }")
-                          .append(".search-highlight { background-color: #ABD1FF; color: black; }") // Theme light blue
-                          .append(".search-highlight-active { background-color: #0066FF; color: white; }") // Theme primary blue
+                          .append(".search-highlight { background-color: " + getCssColor(R.color.word_highlight) + "; color: black; }") 
+                          .append(".search-highlight-active { background-color: " + getCssColor(R.color.word_highlight_active) + "; color: white; }")
                           .append("</style>")
                           .append("<script>")
                           .append("var currentMatchIndex = 0;")
