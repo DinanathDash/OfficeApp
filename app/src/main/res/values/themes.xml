@@ -36,6 +36,9 @@
         <item name="android:statusBarColor">@color/word_primary</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorOnPrimary">@color/white</item>
+        <item name="android:textColorHighlight">@color/word_highlight_active</item>
+        <item name="colorAccent">@color/word_highlight_active</item>
+        <item name="colorControlActivated">@color/word_highlight_active</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Excel" parent="Theme.OfficeApp.Viewer">
@@ -43,6 +46,9 @@
         <item name="android:statusBarColor">@color/excel_primary</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorOnPrimary">@color/white</item>
+        <item name="android:textColorHighlight">@color/excel_highlight_active_bg</item>
+        <item name="colorAccent">@color/excel_primary</item>
+        <item name="colorControlActivated">@color/excel_primary</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Ppt" parent="Theme.OfficeApp.Viewer">
@@ -50,16 +56,25 @@
         <item name="android:statusBarColor">@color/ppt_primary</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="colorOnPrimary">@color/white</item>
+        <item name="android:textColorHighlight">@color/ppt_highlight</item>
+        <item name="colorAccent">@color/ppt_highlight_active</item>
+        <item name="colorControlActivated">@color/ppt_highlight_active</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Pdf" parent="Theme.OfficeApp.Viewer">
         <item name="colorPrimary">@color/viewer_toolbar_color</item>
         <item name="android:statusBarColor">@color/viewer_toolbar_color</item>
+        <item name="android:textColorHighlight">@color/search_highlight</item>
+        <item name="colorAccent">@color/search_highlight_active</item>
+        <item name="colorControlActivated">@color/search_highlight_active</item>
     </style>
 
     <style name="Theme.OfficeApp.Viewer.Txt" parent="Theme.OfficeApp.Viewer">
         <item name="colorPrimary">@color/text_file_primary</item>
         <item name="android:statusBarColor">@color/text_file_primary</item>
+        <item name="android:textColorHighlight">@color/txt_highlight_active</item>
+        <item name="colorAccent">@color/txt_highlight_active</item>
+        <item name="colorControlActivated">@color/txt_highlight_active</item>
     </style>
 
     <!-- Theme for About Screen -->
@@ -96,6 +111,31 @@
     </style>
 
     <style name="Toolbar.Dark" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="searchViewStyle">@style/CustomSearchView</item>
+    </style>
+
+    <style name="Toolbar.Word" parent="Toolbar.Dark">
+        <item name="colorAccent">@color/word_accent_dark</item>
+        <item name="android:textColorHighlight">#330D2B4D</item>
+        <item name="colorControlActivated">@color/word_accent_dark</item>
+    </style>
+
+    <style name="Toolbar.Excel" parent="Toolbar.Dark">
+        <item name="colorAccent">@color/excel_accent_dark</item>
+        <item name="android:textColorHighlight">#330D4F32</item>
+        <item name="colorControlActivated">@color/excel_accent_dark</item>
+    </style>
+
+    <style name="Toolbar.Ppt" parent="Toolbar.Dark">
+        <item name="colorAccent">@color/ppt_accent_dark</item>
+        <item name="android:textColorHighlight">#335D2415</item>
+        <item name="colorControlActivated">@color/ppt_accent_dark</item>
+    </style>
+
+    <style name="Toolbar.Txt" parent="ThemeOverlay.AppCompat.Light">
+        <item name="colorAccent">@color/txt_accent_dark</item>
+        <item name="android:textColorHighlight">#33424242</item>
+        <item name="colorControlActivated">@color/txt_accent_dark</item>
         <item name="searchViewStyle">@style/CustomSearchView</item>
     </style>
 </resources>

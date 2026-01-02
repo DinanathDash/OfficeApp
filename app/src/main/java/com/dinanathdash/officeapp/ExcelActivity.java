@@ -33,7 +33,7 @@ public class ExcelActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
     private TableLayout tableLayout;
-    private ProgressBar progressBar;
+    private com.airbnb.lottie.LottieAnimationView progressBar;
     private Workbook workbook;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -41,6 +41,48 @@ public class ExcelActivity extends AppCompatActivity {
     private java.util.List<TextView> matchViews = new java.util.ArrayList<>();
     private int currentMatchIndex = -1;
     private com.dinanathdash.officeapp.ui.ZoomLayout zoomLayout; // NEW
+    
+    // Cache for border color to avoid potential resource lookup every cell
+    private static final int BORDER_COLOR = 0xFFE0E0E0; 
+    private static final int BORDER_WIDTH_PX = 2; // approx 1dp
+
+
+
+    private Integer getBackgroundColorFromStyle(org.apache.poi.ss.usermodel.CellStyle style) {
+        if (style == null) return null;
+
+        // Check for fill pattern, if NO_FILL, return null
+        if (style.getFillPattern() == org.apache.poi.ss.usermodel.FillPatternType.NO_FILL) return null;
+
+        try {
+            org.apache.poi.ss.usermodel.Color color = style.getFillForegroundColorColor();
+            if (color instanceof org.apache.poi.xssf.usermodel.XSSFColor) {
+                byte[] rgb = ((org.apache.poi.xssf.usermodel.XSSFColor) color).getRGB();
+                if (rgb != null) {
+                   return Color.rgb(rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
+                }
+            } else if (color instanceof org.apache.poi.hssf.util.HSSFColor) {
+                short[] triplet = ((org.apache.poi.hssf.util.HSSFColor) color).getTriplet();
+                if (triplet != null) {
+                    return Color.rgb(triplet[0], triplet[1], triplet[2]);
+                }
+            } 
+            
+            // Fallback for indexed colors if color object is null or not handled above
+            if (workbook instanceof org.apache.poi.hssf.usermodel.HSSFWorkbook) {
+                 short fillIndex = style.getFillForegroundColor();
+                 org.apache.poi.hssf.usermodel.HSSFPalette palette = ((org.apache.poi.hssf.usermodel.HSSFWorkbook) workbook).getCustomPalette();
+                 org.apache.poi.hssf.util.HSSFColor hssfColor = palette.getColor(fillIndex);
+                 if (hssfColor != null) {
+                     short[] triplet = hssfColor.getTriplet();
+                      return Color.rgb(triplet[0], triplet[1], triplet[2]);
+                 }
+            }
+        } catch (Exception e) {
+            // Ignore color extraction errors, return null
+        }
+        return null;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +100,13 @@ public class ExcelActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         tableLayout = findViewById(R.id.tableLayout);
         progressBar = findViewById(R.id.progressBar);
+
+        // Apply Dynamic Colors
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+        int primaryColor = typedValue.data;
+        com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
+
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH);
         
@@ -139,21 +188,42 @@ public class ExcelActivity extends AppCompatActivity {
         }
         
         // 2. Render Header Row (CORNER + A, B, C...)
+        // Optimize: Use margin-based borders implementation
+        tableLayout.setBackgroundColor(Color.parseColor("#E0E0E0")); // The border color
+        
         TableRow headerRow = new TableRow(this);
+        headerRow.setBackgroundColor(Color.parseColor("#E0E0E0")); // Row bg
         
         // Corner cell (Top-Left)
         TextView cornerView = new TextView(this);
         cornerView.setText("");
-        cornerView.setBackgroundResource(R.drawable.header_cell_bg);
+        cornerView.setBackgroundColor(Color.parseColor("#F5F5F5")); // Header bg
+        // Use margins to show table background (border)
+        TableRow.LayoutParams cornerParams = new TableRow.LayoutParams(
+            TableRow.LayoutParams.WRAP_CONTENT,
+            TableRow.LayoutParams.MATCH_PARENT
+        );
+        cornerParams.setMargins(1, 1, 1, 1);
+        cornerView.setLayoutParams(cornerParams);
+        cornerView.setPadding(24, 16, 24, 16);
         headerRow.addView(cornerView);
         
         for(int c=0; c<maxColCount; c++) {
             TextView colHeader = new TextView(this);
             colHeader.setText(getColumnName(c));
             colHeader.setGravity(android.view.Gravity.CENTER);
-            colHeader.setBackgroundResource(R.drawable.header_cell_bg);
+            colHeader.setBackgroundColor(Color.parseColor("#F5F5F5"));
             colHeader.setTextColor(Color.BLACK);
             colHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            
+            TableRow.LayoutParams params = new TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.MATCH_PARENT
+            );
+            params.setMargins(0, 1, 1, 1); // Avoid double borders if possible, but 1,1,1,1 is safer for simplicity
+            colHeader.setLayoutParams(params);
+            colHeader.setPadding(24, 16, 24, 16);
+            
             headerRow.addView(colHeader);
         }
         tableLayout.addView(headerRow);
@@ -162,31 +232,63 @@ public class ExcelActivity extends AppCompatActivity {
         for (int r = 0; r <= lastRowNum; r++) {
             Row row = sheet.getRow(r);
             TableRow tableRow = new TableRow(this);
+            tableRow.setBackgroundColor(Color.parseColor("#E0E0E0"));
             
             // Row Header (1, 2, 3...)
             TextView rowHeader = new TextView(this);
             rowHeader.setText(String.valueOf(r + 1));
+            TableRow.LayoutParams headerParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.MATCH_PARENT
+            );
+            headerParams.setMargins(1, 0, 1, 1);
+            rowHeader.setLayoutParams(headerParams);
             rowHeader.setGravity(android.view.Gravity.CENTER);
-            rowHeader.setBackgroundResource(R.drawable.header_cell_bg);
+            rowHeader.setBackgroundColor(Color.parseColor("#F5F5F5"));
             rowHeader.setTextColor(Color.BLACK);
             rowHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            rowHeader.setPadding(24, 16, 24, 16);
             tableRow.addView(rowHeader);
             
             // Data Cells
             for (int c = 0; c < maxColCount; c++) {
-                Cell cell = (row != null) ? row.getCell(c, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) : null;
+                // Change: Use MissingCellPolicy.CREATE_NULL_AS_BLANK to handle empty styled cells
+                Cell cell = (row != null) ? row.getCell(c, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK) : null;
                 
                 TextView textView = new TextView(this);
+                // Use margins for borders
+                TableRow.LayoutParams cellParams = new TableRow.LayoutParams(
+                    TableRow.LayoutParams.WRAP_CONTENT,
+                    TableRow.LayoutParams.MATCH_PARENT
+                );
+                cellParams.setMargins(0, 0, 1, 1);
+                textView.setLayoutParams(cellParams);
                 textView.setPadding(24, 16, 24, 16);
-                textView.setBackgroundResource(R.drawable.table_cell_bg);
+                
+                // Default background
+                textView.setBackgroundColor(Color.WHITE);
                 textView.setTextColor(Color.BLACK);
                 textView.setTextSize(14f);
+                textView.setGravity(android.view.Gravity.CENTER_VERTICAL);
                 textView.setTextIsSelectable(true);
                 
                 String text = "";
+                Integer bgColor = null;
+
                 if (cell != null) {
                     text = formatter.formatCellValue(cell);
+                    bgColor = getBackgroundColorFromStyle(cell.getCellStyle());
                 }
+                
+                // Fallback: If cell has no color (or is null), check row style
+                if (bgColor == null && row != null) {
+                     bgColor = getBackgroundColorFromStyle(row.getRowStyle());
+                }
+
+                if (bgColor != null) {
+                    textView.setBackgroundColor(bgColor);
+                }
+                
                 textView.setText(text);
                 tableRow.addView(textView);
             }
@@ -355,20 +457,22 @@ public class ExcelActivity extends AppCompatActivity {
         TableRow row = (TableRow) view.getParent();
         
         // Calculate positions relative to TableLayout
+        // view.getLeft() is relative to Row. row.getLeft() is relative to Table.
         int x = view.getLeft() + row.getLeft();
-        int y = row.getTop();
+        int y = row.getTop(); // TableRow top relative to Table
         
-        // Center the view in the ZoomLayout
-        // ZoomLayout logic handles pan via translation
-        // We can manually set translation to center this point
+        // Add view's own top/left offsets if necessary (e.g. padding/margins effectively, but getLeft/Top handles position)
+        // Usually view.getTop() inside a TableRow is 0 or small vertical alignment offset.
+        y += view.getTop();
+
+        // Calculate center of the target view
+        float centerX = x + view.getWidth() / 2f;
+        float centerY = y + view.getHeight() / 2f;
         
         if (zoomLayout == null) zoomLayout = findViewById(R.id.zoomLayout);
         
         if (zoomLayout != null) {
-             // Simplest approach: Just rely on requestRectangleOnScreen if ZoomLayout supported it fully, 
-             // but since it's custom, let's just center it visually if possible or just highlight.
-             // For now, removing the specific scroll logic to avoid compilation errors with missing ScrollView.
-             // Refinement: Implement 'scrollTo' in ZoomLayout later if needed.
+             zoomLayout.scrollToCenter(centerX, centerY, true);
         }
     }
     

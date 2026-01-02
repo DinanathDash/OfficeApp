@@ -20,6 +20,7 @@ public class TxtActivity extends AppCompatActivity {
 
     private TextView textView;
     private String fullText = "";
+    private com.airbnb.lottie.LottieAnimationView progressBar;
 
     private java.util.List<Integer> matchIndices = new java.util.ArrayList<>();
     private int currentMatchIndex = -1;
@@ -42,6 +43,15 @@ public class TxtActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         textView = findViewById(R.id.textView);
+        progressBar = findViewById(R.id.progressBar);
+        
+        if (progressBar != null) {
+            android.util.TypedValue typedValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+            int primaryColor = typedValue.data;
+            com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
+        }
+
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_VERTICAL); // Vertical scroll, width constrained for wrap
         zoomLayout.setScrollableAtScaleOne(true); // Handle scrolling ourselves
@@ -61,6 +71,7 @@ public class TxtActivity extends AppCompatActivity {
     }
 
     private void loadText(Uri uri) {
+        if (progressBar != null) progressBar.setVisibility(android.view.View.VISIBLE);
         new Thread(() -> {
             StringBuilder stringBuilder = new StringBuilder();
             try (InputStream inputStream = getContentResolver().openInputStream(uri);
@@ -75,11 +86,15 @@ public class TxtActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     fullText = text;
                     textView.setText(fullText);
+                    if (progressBar != null) progressBar.setVisibility(android.view.View.GONE);
                 });
                 
             } catch (IOException e) {
                 e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(TxtActivity.this, "Error reading file", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    Toast.makeText(TxtActivity.this, "Error reading file", Toast.LENGTH_SHORT).show();
+                    if (progressBar != null) progressBar.setVisibility(android.view.View.GONE);
+                });
             }
         }).start();
     }

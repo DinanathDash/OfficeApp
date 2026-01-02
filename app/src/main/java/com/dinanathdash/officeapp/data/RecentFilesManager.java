@@ -29,20 +29,20 @@ public class RecentFilesManager {
         return instance;
     }
 
-    public List<RecentFile> getRecentFiles() {
+    public synchronized List<RecentFile> getRecentFiles() {
         String json = sharedPreferences.getString(KEY_RECENT_FILES, null);
         Type type = new TypeToken<ArrayList<RecentFile>>() {}.getType();
         List<RecentFile> files = gson.fromJson(json, type);
         return files == null ? new ArrayList<>() : files;
     }
 
-    public void removeRecentFile(RecentFile file) {
+    public synchronized void removeRecentFile(RecentFile file) {
         List<RecentFile> files = getRecentFiles();
         files.removeIf(f -> f.getUriString().equals(file.getUriString()));
         saveRecentFiles(files);
     }
 
-    public void addRecentFile(RecentFile file) {
+    public synchronized void addRecentFile(RecentFile file) {
         List<RecentFile> files = getRecentFiles();
         // Remove if exists to move to top
         files.removeIf(f -> f.getUriString().equals(file.getUriString()));
@@ -55,12 +55,12 @@ public class RecentFilesManager {
         saveRecentFiles(files);
     }
     
-    private void saveRecentFiles(List<RecentFile> files) {
+    private synchronized void saveRecentFiles(List<RecentFile> files) {
         String json = gson.toJson(files);
         sharedPreferences.edit().putString(KEY_RECENT_FILES, json).apply();
     }
 
-    public void cleanUpInvalidFiles(Context context) {
+    public synchronized void cleanUpInvalidFiles(Context context) {
         List<RecentFile> files = getRecentFiles();
         boolean changed = files.removeIf(file -> {
             try {

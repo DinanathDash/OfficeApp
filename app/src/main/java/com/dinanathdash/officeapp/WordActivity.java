@@ -21,7 +21,7 @@ import java.util.concurrent.Executors;
 
 public class WordActivity extends AppCompatActivity {
 
-    private ProgressBar progressBar;
+    private com.airbnb.lottie.LottieAnimationView progressBar;
     private android.webkit.WebView webView;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -41,6 +41,13 @@ public class WordActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         progressBar = findViewById(R.id.progressBar);
+        
+        // Apply Dynamic Colors
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+        int primaryColor = typedValue.data;
+        com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
+
         webView = findViewById(R.id.webView);
         
         // Configure WebView

@@ -35,6 +35,7 @@ public class PdfActivity extends AppCompatActivity {
     private PdfPageAdapter adapter;
     private PdfRenderer pdfRenderer;
     private ParcelFileDescriptor fileDescriptor;
+    private com.airbnb.lottie.LottieAnimationView progressBar;
     
     // Search related
     private Map<Integer, String> pageTextMap = new HashMap<>(); // Page Index -> Text
@@ -71,6 +72,14 @@ public class PdfActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        
+        progressBar = findViewById(R.id.progressBar);
+        if (progressBar != null) {
+            android.util.TypedValue typedValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+            int primaryColor = typedValue.data;
+            com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
+        }
 
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -188,6 +197,7 @@ public class PdfActivity extends AppCompatActivity {
     
     private void loadPdfDocument(Uri uri) {
         currentUri = uri;
+        if (progressBar != null) progressBar.setVisibility(android.view.View.VISIBLE);
         new Thread(() -> {
             try {
                  InputStream inputStream = getContentResolver().openInputStream(uri);
@@ -204,9 +214,13 @@ public class PdfActivity extends AppCompatActivity {
                             androidx.core.content.ContextCompat.getColor(this, R.color.pdf_highlight_active)
                          );
                      }
+                     if (progressBar != null) progressBar.setVisibility(android.view.View.GONE);
                  });
             } catch (IOException e) {
                 e.printStackTrace();
+                runOnUiThread(() -> {
+                    if (progressBar != null) progressBar.setVisibility(android.view.View.GONE);
+                });
             }
         }).start();
     }
@@ -237,9 +251,6 @@ public class PdfActivity extends AppCompatActivity {
                 }
                 extractionDoc.close();
                 isTextExtracted = true;
-                
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> 
-                    Toast.makeText(PdfActivity.this, "Search index ready", Toast.LENGTH_SHORT).show());
                 
             } catch (Exception e) {
                 e.printStackTrace();

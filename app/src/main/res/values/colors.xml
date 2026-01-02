@@ -39,4 +39,10 @@
     <!-- PDF (Toolbar: #ABD1FF) -->
     <color name="pdf_highlight">#800066FF</color>
     <color name="pdf_highlight_active">#ABD1FF</color>
+
+    <!-- Darker Accents for Toolbar Handles -->
+    <color name="word_accent_dark">#0D2B4D</color>
+    <color name="excel_accent_dark">#0D4F32</color>
+    <color name="ppt_accent_dark">#5D2415</color>
+    <color name="txt_accent_dark">#424242</color>
 </resources>

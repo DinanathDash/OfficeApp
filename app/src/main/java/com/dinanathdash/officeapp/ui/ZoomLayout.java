@@ -104,6 +104,11 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                  if (mode == Mode.DRAG) {
+                     View child = child();
+                     if (child != null && !child.hasTransientState()) {
+                         child.setHasTransientState(true);
+                     }
+                 
                      dx -= distanceX;
                      dy -= distanceY;
                      applyScaleAndTranslation();
@@ -117,6 +122,10 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
                     
                     View child = child();
                     if (child == null) return false;
+                    
+                    if (!child.hasTransientState()) {
+                        child.setHasTransientState(true);
+                    }
                     
                     float childWidth = child.getWidth() * scale;
                     float childHeight = child.getHeight() * scale;
@@ -155,6 +164,10 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
             ViewCompat.postInvalidateOnAnimation(this);
         } else if (mode == Mode.FLING) {
             mode = Mode.NONE;
+            View child = child();
+            if (child != null) {
+                child.setHasTransientState(false);
+            }
         }
     }
     
@@ -325,8 +338,13 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
                  break;
                  
              case MotionEvent.ACTION_UP:
+             case MotionEvent.ACTION_CANCEL:
                  if (mode != Mode.FLING) {
                      mode = Mode.NONE;
+                     View child = child();
+                     if (child != null) {
+                         child.setHasTransientState(false);
+                     }
                  }
                  break;
         }
@@ -403,6 +421,23 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
         
         if (animate) {
             // Simple animation or just reuse the scale animation helper with current scale
+            animateScaleAndTranslation(this.scale, targetDx, targetDy);
+        } else {
+            this.dx = targetDx;
+            this.dy = targetDy;
+            applyScaleAndTranslation();
+        }
+    }
+
+    public void scrollToCenter(float x, float y, boolean animate) {
+        float parentWidth = getWidth();
+        float parentHeight = getHeight();
+
+        // Calculate target translation to center the point (x,y)
+        float targetDx = (parentWidth / 2f) - (x * scale);
+        float targetDy = (parentHeight / 2f) - (y * scale);
+
+        if (animate) {
             animateScaleAndTranslation(this.scale, targetDx, targetDy);
         } else {
             this.dx = targetDx;

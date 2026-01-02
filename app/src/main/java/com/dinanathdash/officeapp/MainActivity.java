@@ -188,14 +188,28 @@ public class MainActivity extends AppCompatActivity {
     private void loadRecentFiles() {
         if (adapter == null) return;
         
-        // Clean up any files that might have been deleted externally
-        RecentFilesManager.getInstance(this).cleanUpInvalidFiles(this);
-        
-        List<RecentFile> files = RecentFilesManager.getInstance(this).getRecentFiles();
-        adapter.updateList(files);
+        // Load immediately from cache for speed
+        List<RecentFile> cachedFiles = RecentFilesManager.getInstance(this).getRecentFiles();
+        adapter.updateList(cachedFiles);
         if (emptyView != null) {
-            emptyView.setVisibility(files.isEmpty() ? View.VISIBLE : View.GONE);
+            emptyView.setVisibility(cachedFiles.isEmpty() ? View.VISIBLE : View.GONE);
         }
+
+        // Clean up any files that might have been deleted externally in background
+        new Thread(() -> {
+            RecentFilesManager.getInstance(this).cleanUpInvalidFiles(this);
+            
+            // Post update to UI
+            runOnUiThread(() -> {
+                List<RecentFile> files = RecentFilesManager.getInstance(this).getRecentFiles();
+                if (adapter != null) {
+                    adapter.updateList(files);
+                }
+                if (emptyView != null) {
+                    emptyView.setVisibility(files.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            });
+        }).start();
     }
 
     private void onFileSelected(Uri uri) {
@@ -203,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (SecurityException e) {
-            e.printStackTrace();
+            // Expected for some 3rd party providers like WhatsApp
         }
 
         String name = FileUtils.getFileName(this, uri);

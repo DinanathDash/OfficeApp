@@ -50,7 +50,7 @@ import java.util.concurrent.Executors;
 public class PptActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private ProgressBar progressBar;
+    private com.airbnb.lottie.LottieAnimationView progressBar;
     private SlidesAdapter adapter;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     
@@ -73,6 +73,12 @@ public class PptActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
+
+        // Apply Dynamic Colors
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+        int primaryColor = typedValue.data;
+        com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
         
 
         

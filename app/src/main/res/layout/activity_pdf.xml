@@ -29,4 +29,14 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:clipToPadding="false"/>
 
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/progressBar"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center"
+        app:lottie_fileName="abstract_loader.json"
+        app:lottie_loop="true"
+        app:lottie_autoPlay="true"
+        android:visibility="gone"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
