@@ -25,6 +25,8 @@ poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" 
 poi-ooxml-full = { group = "org.apache.poi", name = "poi-ooxml-full", version.ref = "poi" }
 poi-scratchpad = { group = "org.apache.poi", name = "poi-scratchpad", version.ref = "poi" }
 pdfbox = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "pdfbox" }
+log4j-to-slf4j = { group = "org.apache.logging.log4j", name = "log4j-to-slf4j", version = "2.24.1" }
+slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version = "2.0.12" }
 
 
 [plugins]

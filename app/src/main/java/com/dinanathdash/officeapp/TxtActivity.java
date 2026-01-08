@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import com.dinanathdash.officeapp.utils.ViewUtils;
 
 import com.dinanathdash.officeapp.utils.FileUtils;
 
@@ -55,6 +56,7 @@ public class TxtActivity extends AppCompatActivity {
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_VERTICAL); // Vertical scroll, width constrained for wrap
         zoomLayout.setScrollableAtScaleOne(true); // Handle scrolling ourselves
+        ViewUtils.applyBottomWindowInsets(zoomLayout);
         
 
 
@@ -215,6 +217,11 @@ public class TxtActivity extends AppCompatActivity {
             if (zoomLayout == null) zoomLayout = findViewById(R.id.zoomLayout);
             if (zoomLayout != null) {
                 // Not easily scrollable via simple API in ZoomLayout yet
+                 // Calculate layout position
+                 float centerX = textView.getWidth() / 2f; 
+                 float centerY = y; // Top of the line
+                 
+                 zoomLayout.scrollToTopArea(centerX, centerY, true);
             }
         }
     }

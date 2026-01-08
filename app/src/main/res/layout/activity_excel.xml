@@ -31,6 +31,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorPrimary"
             app:tabMode="scrollable"
+            app:tabGravity="start"
             app:tabTextColor="@color/white"
             app:tabSelectedTextColor="@color/white"
             app:tabIndicatorColor="@color/white"/>

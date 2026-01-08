@@ -105,8 +105,9 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                  if (mode == Mode.DRAG) {
                      View child = child();
-                     if (child != null && !child.hasTransientState()) {
+                     if (child != null && !mHasTransientStateSet) {
                          child.setHasTransientState(true);
+                         mHasTransientStateSet = true;
                      }
                  
                      dx -= distanceX;
@@ -123,8 +124,9 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
                     View child = child();
                     if (child == null) return false;
                     
-                    if (!child.hasTransientState()) {
+                    if (!mHasTransientStateSet) {
                         child.setHasTransientState(true);
+                        mHasTransientStateSet = true;
                     }
                     
                     float childWidth = child.getWidth() * scale;
@@ -165,8 +167,9 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
         } else if (mode == Mode.FLING) {
             mode = Mode.NONE;
             View child = child();
-            if (child != null) {
+            if (child != null && mHasTransientStateSet) {
                 child.setHasTransientState(false);
+                mHasTransientStateSet = false;
             }
         }
     }
@@ -252,6 +255,7 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
     private float lastTouchX;
     private float lastTouchY;
     private boolean isDragging;
+    private boolean mHasTransientStateSet = false;
 
     // ... (constructors call init)
 
@@ -342,8 +346,9 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
                  if (mode != Mode.FLING) {
                      mode = Mode.NONE;
                      View child = child();
-                     if (child != null) {
+                     if (child != null && mHasTransientStateSet) {
                          child.setHasTransientState(false);
+                         mHasTransientStateSet = false;
                      }
                  }
                  break;
@@ -436,6 +441,24 @@ public class ZoomLayout extends FrameLayout implements ScaleGestureDetector.OnSc
         // Calculate target translation to center the point (x,y)
         float targetDx = (parentWidth / 2f) - (x * scale);
         float targetDy = (parentHeight / 2f) - (y * scale);
+
+        if (animate) {
+            animateScaleAndTranslation(this.scale, targetDx, targetDy);
+        } else {
+            this.dx = targetDx;
+            this.dy = targetDy;
+            applyScaleAndTranslation();
+        }
+    }
+
+    public void scrollToTopArea(float x, float y, boolean animate) {
+        float parentWidth = getWidth();
+        float parentHeight = getHeight();
+
+        // Calculate target translation to place point (x,y) at top 25% of screen
+        // This leaves space for the keyboard below
+        float targetDx = (parentWidth / 2f) - (x * scale); // Center horizontally still
+        float targetDy = (parentHeight * 0.25f) - (y * scale); // Top 25% vertically
 
         if (animate) {
             animateScaleAndTranslation(this.scale, targetDx, targetDy);

@@ -60,13 +60,33 @@ public class RecentFilesManager {
         sharedPreferences.edit().putString(KEY_RECENT_FILES, json).apply();
     }
 
-    public synchronized void cleanUpInvalidFiles(Context context) {
+    public synchronized void cleanUpInvalidFiles(Context context, boolean enforceLocalOnly) {
         List<RecentFile> files = getRecentFiles();
         boolean changed = files.removeIf(file -> {
             try {
-                return !com.dinanathdash.officeapp.utils.FileUtils.doesFileExist(context, android.net.Uri.parse(file.getUriString()));
+                android.net.Uri uri = android.net.Uri.parse(file.getUriString());
+                
+                // Use the enhanced status check with path fallback (Case 3 fix)
+                com.dinanathdash.officeapp.utils.FileUtils.FileStatus status = 
+                    com.dinanathdash.officeapp.utils.FileUtils.checkFileStatusWithPath(context, uri, file.getPath());
+                
+                // 1. If file DEFINITELY doesn't exist (even with path fallback), remove it always.
+                if (status == com.dinanathdash.officeapp.utils.FileUtils.FileStatus.NOT_FOUND) {
+                    return true;
+                }
+                
+                // 2. If we are enforcing local files only (e.g. on clean startup),
+                // remove files that are NOT local storage.
+                if (enforceLocalOnly) {
+                    boolean isLocal = com.dinanathdash.officeapp.utils.FileUtils.isLocalFile(context, uri);
+                    if (!isLocal) {
+                        return true; // Remove external file on startup
+                    }
+                }
+                
+                return false; // Keep file
             } catch (Exception e) {
-                return true; // Remove on error
+                return false; // Keep on error to be safe
             }
         });
 

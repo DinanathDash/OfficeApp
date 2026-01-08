@@ -25,6 +25,8 @@
         <item name="colorOnPrimary">@color/text_primary</item>
         <item name="android:statusBarColor">@color/viewer_toolbar_color</item>
         <item name="android:windowLightStatusBar">true</item> 
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="colorSecondary">@color/primary_blue</item>
         <item name="colorAccent">@color/primary_blue</item>
         <item name="android:windowBackground">@color/bg_gray</item>

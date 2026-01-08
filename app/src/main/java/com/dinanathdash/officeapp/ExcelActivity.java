@@ -42,6 +42,11 @@ public class ExcelActivity extends AppCompatActivity {
     private int currentMatchIndex = -1;
     private com.dinanathdash.officeapp.ui.ZoomLayout zoomLayout; // NEW
     
+    // Incremental Rendering Locals
+    private Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingRenderTask;
+    private static final int BATCH_SIZE = 30; // Rows to render per frame/tick
+    
     // Cache for border color to avoid potential resource lookup every cell
     private static final int BORDER_COLOR = 0xFFE0E0E0; 
     private static final int BORDER_WIDTH_PX = 2; // approx 1dp
@@ -109,6 +114,7 @@ public class ExcelActivity extends AppCompatActivity {
 
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH);
+        com.dinanathdash.officeapp.utils.ViewUtils.applyBottomWindowInsets(zoomLayout);
         
 
         
@@ -170,6 +176,12 @@ public class ExcelActivity extends AppCompatActivity {
     }
 
     private void displaySheet(int sheetIndex) {
+        // Cancel any existing render task to prevent race conditions or double rendering
+        if (pendingRenderTask != null) {
+            mainHandler.removeCallbacks(pendingRenderTask);
+            pendingRenderTask = null;
+        }
+
         tableLayout.removeAllViews();
         if (workbook == null) return;
         
@@ -177,6 +189,8 @@ public class ExcelActivity extends AppCompatActivity {
         DataFormatter formatter = new DataFormatter();
         
         // 1. Calculate max column count across ALL rows to ensure rectangular grid
+        // (This might still be slow for huge sheets, but much faster than inflating views. 
+        //  Ideally this should be cached or done bg, but let's keep it simple for now as view inflation is the bottleneck)
         int maxColCount = 0;
         int lastRowNum = sheet.getLastRowNum();
         for (int i = 0; i <= lastRowNum; i++) {
@@ -187,18 +201,16 @@ public class ExcelActivity extends AppCompatActivity {
              }
         }
         
-        // 2. Render Header Row (CORNER + A, B, C...)
-        // Optimize: Use margin-based borders implementation
-        tableLayout.setBackgroundColor(Color.parseColor("#E0E0E0")); // The border color
+        // 2. Render Header Row IMMEDIATELY
+        tableLayout.setBackgroundColor(Color.parseColor("#E0E0E0")); 
         
         TableRow headerRow = new TableRow(this);
-        headerRow.setBackgroundColor(Color.parseColor("#E0E0E0")); // Row bg
+        headerRow.setBackgroundColor(Color.parseColor("#E0E0E0")); 
         
-        // Corner cell (Top-Left)
+        // Corner cell
         TextView cornerView = new TextView(this);
         cornerView.setText("");
-        cornerView.setBackgroundColor(Color.parseColor("#F5F5F5")); // Header bg
-        // Use margins to show table background (border)
+        cornerView.setBackgroundColor(Color.parseColor("#F5F5F5")); 
         TableRow.LayoutParams cornerParams = new TableRow.LayoutParams(
             TableRow.LayoutParams.WRAP_CONTENT,
             TableRow.LayoutParams.MATCH_PARENT
@@ -220,7 +232,7 @@ public class ExcelActivity extends AppCompatActivity {
                 TableRow.LayoutParams.WRAP_CONTENT,
                 TableRow.LayoutParams.MATCH_PARENT
             );
-            params.setMargins(0, 1, 1, 1); // Avoid double borders if possible, but 1,1,1,1 is safer for simplicity
+            params.setMargins(0, 1, 1, 1); 
             colHeader.setLayoutParams(params);
             colHeader.setPadding(24, 16, 24, 16);
             
@@ -228,13 +240,20 @@ public class ExcelActivity extends AppCompatActivity {
         }
         tableLayout.addView(headerRow);
         
-        // 3. Render Data Rows (1...N) + Data
-        for (int r = 0; r <= lastRowNum; r++) {
+        // 3. Start Incremental Rendering for Data Rows
+        progressBar.setVisibility(View.VISIBLE); // Ensure loader is visible
+        renderRowsIncrementally(sheet, 0, lastRowNum, maxColCount, formatter);
+    }
+
+    private void renderRowsIncrementally(Sheet sheet, int startRow, int lastRowNum, int maxColCount, DataFormatter formatter) {
+        int endRow = Math.min(startRow + BATCH_SIZE, lastRowNum + 1);
+        
+        for (int r = startRow; r < endRow; r++) {
             Row row = sheet.getRow(r);
             TableRow tableRow = new TableRow(this);
             tableRow.setBackgroundColor(Color.parseColor("#E0E0E0"));
             
-            // Row Header (1, 2, 3...)
+            // Row Header
             TextView rowHeader = new TextView(this);
             rowHeader.setText(String.valueOf(r + 1));
             TableRow.LayoutParams headerParams = new TableRow.LayoutParams(
@@ -252,11 +271,9 @@ public class ExcelActivity extends AppCompatActivity {
             
             // Data Cells
             for (int c = 0; c < maxColCount; c++) {
-                // Change: Use MissingCellPolicy.CREATE_NULL_AS_BLANK to handle empty styled cells
                 Cell cell = (row != null) ? row.getCell(c, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK) : null;
                 
                 TextView textView = new TextView(this);
-                // Use margins for borders
                 TableRow.LayoutParams cellParams = new TableRow.LayoutParams(
                     TableRow.LayoutParams.WRAP_CONTENT,
                     TableRow.LayoutParams.MATCH_PARENT
@@ -265,7 +282,6 @@ public class ExcelActivity extends AppCompatActivity {
                 textView.setLayoutParams(cellParams);
                 textView.setPadding(24, 16, 24, 16);
                 
-                // Default background
                 textView.setBackgroundColor(Color.WHITE);
                 textView.setTextColor(Color.BLACK);
                 textView.setTextSize(14f);
@@ -276,11 +292,37 @@ public class ExcelActivity extends AppCompatActivity {
                 Integer bgColor = null;
 
                 if (cell != null) {
-                    text = formatter.formatCellValue(cell);
+                    if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.FORMULA) {
+                        try {
+                            switch (cell.getCachedFormulaResultType()) {
+                                case NUMERIC:
+                                    text = formatter.formatRawCellContents(
+                                            cell.getNumericCellValue(),
+                                            cell.getCellStyle().getDataFormat(),
+                                            cell.getCellStyle().getDataFormatString()
+                                    );
+                                    break;
+                                case STRING:
+                                    text = cell.getStringCellValue();
+                                    break;
+                                case BOOLEAN:
+                                    text = String.valueOf(cell.getBooleanCellValue());
+                                    break;
+                                case ERROR:
+                                    text = org.apache.poi.ss.usermodel.FormulaError.forInt(cell.getErrorCellValue()).getString();
+                                    break;
+                                default:
+                                    text = formatter.formatCellValue(cell);
+                            }
+                        } catch (Exception e) {
+                            text = formatter.formatCellValue(cell);
+                        }
+                    } else {
+                        text = formatter.formatCellValue(cell);
+                    }
                     bgColor = getBackgroundColorFromStyle(cell.getCellStyle());
                 }
                 
-                // Fallback: If cell has no color (or is null), check row style
                 if (bgColor == null && row != null) {
                      bgColor = getBackgroundColorFromStyle(row.getRowStyle());
                 }
@@ -293,6 +335,16 @@ public class ExcelActivity extends AppCompatActivity {
                 tableRow.addView(textView);
             }
             tableLayout.addView(tableRow);
+        }
+        
+        // Schedule next batch or finish
+        if (endRow <= lastRowNum) {
+            pendingRenderTask = () -> renderRowsIncrementally(sheet, endRow, lastRowNum, maxColCount, formatter);
+            mainHandler.post(pendingRenderTask);
+        } else {
+            // Done!
+            progressBar.setVisibility(View.GONE);
+            pendingRenderTask = null;
         }
     }
 
@@ -472,7 +524,7 @@ public class ExcelActivity extends AppCompatActivity {
         if (zoomLayout == null) zoomLayout = findViewById(R.id.zoomLayout);
         
         if (zoomLayout != null) {
-             zoomLayout.scrollToCenter(centerX, centerY, true);
+             zoomLayout.scrollToTopArea(centerX, centerY, true);
         }
     }
     

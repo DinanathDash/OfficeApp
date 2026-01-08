@@ -102,4 +102,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("com.airbnb.android:lottie:6.4.0")
+    implementation(libs.log4j.to.slf4j)
+    implementation(libs.slf4j.simple)
 }

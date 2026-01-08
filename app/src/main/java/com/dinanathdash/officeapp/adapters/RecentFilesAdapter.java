@@ -69,7 +69,10 @@ public class RecentFilesAdapter extends RecyclerView.Adapter<RecentFilesAdapter.
         holder.fileDate.setText(dateStr);
 
         // Set Icon
-        String ext = com.dinanathdash.officeapp.utils.FileUtils.getFileExtension(holder.itemView.getContext(), android.net.Uri.parse(file.getUriString()));
+        // Set Icon
+        // Use the stored type instead of re-querying the URI, 
+        // which ensures the icon persists even if permission to the URI is lost.
+        String ext = file.getType();
         holder.ivFileIcon.setImageResource(com.dinanathdash.officeapp.utils.FileUtils.getFileIconResource(ext));
         holder.ivFileIcon.setImageTintList(null); // Remove any tint if present in XML layout
         

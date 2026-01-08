@@ -23,16 +23,22 @@ import com.dinanathdash.officeapp.adapters.RecentFilesAdapter;
 import com.dinanathdash.officeapp.data.RecentFile;
 import com.dinanathdash.officeapp.data.RecentFilesManager;
 import com.dinanathdash.officeapp.utils.FileUtils;
+import com.dinanathdash.officeapp.utils.UpdateManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import android.os.Environment;
+import android.provider.Settings;
+import androidx.appcompat.app.AlertDialog;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecentFilesAdapter adapter;
     private TextView emptyView;
     private boolean isGridMode = false;
+    private boolean isPermissionDialogShowing = false;
 
     // File Picker Result
     private final ActivityResultLauncher<String[]> openFileLauncher = registerForActivityResult(
@@ -56,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // Check for updates silently in the background
+        UpdateManager updateManager = new UpdateManager(this);
+        updateManager.checkForUpdates(true);
 
         // Initialize UI
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
@@ -134,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
             ivProfile.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
         }
 
-        // Load Recents
-        loadRecentFiles();
+        // Load Recents with strict cleanup on startup
+        performStartupCleanup();
         
         // FAB Click
         if (fabOpen != null) {
@@ -179,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        checkAllFilesPermission();
         loadRecentFiles();
 
     }
@@ -195,9 +206,15 @@ public class MainActivity extends AppCompatActivity {
             emptyView.setVisibility(cachedFiles.isEmpty() ? View.VISIBLE : View.GONE);
         }
 
-        // Clean up any files that might have been deleted externally in background
+        // Clean up
+        // If this is the FIRST load (e.g. Activity creation), we want to enforce local only
+        // effectively clearing out session-temporary files.
+        // We can track if it's "start up" via a flag or simply call a specific cleanup method in onCreate.
+        // But since loadRecentFiles is called often, let's just do "standard" cleanup (validation) here.
+        // We will call the STRICT cleanup from onCreate specially.
+        
         new Thread(() -> {
-            RecentFilesManager.getInstance(this).cleanUpInvalidFiles(this);
+            RecentFilesManager.getInstance(this).cleanUpInvalidFiles(this, false); // False = just validate existence
             
             // Post update to UI
             runOnUiThread(() -> {
@@ -211,6 +228,17 @@ public class MainActivity extends AppCompatActivity {
             });
         }).start();
     }
+    
+    private void performStartupCleanup() {
+         new Thread(() -> {
+            // True = remove anything not local (Clean session files)
+            RecentFilesManager.getInstance(this).cleanUpInvalidFiles(this, true);
+            
+            runOnUiThread(() -> {
+                 loadRecentFiles();
+            });
+         }).start();
+    }
 
     private void onFileSelected(Uri uri) {
         // Persist permission
@@ -223,23 +251,51 @@ public class MainActivity extends AppCompatActivity {
         String name = FileUtils.getFileName(this, uri);
         String ext = FileUtils.getFileExtension(this, uri);
         String type = (ext != null) ? ext.toUpperCase() : "FILE";
+        String path = FileUtils.getPath(this, uri);
+
+        // Smart Match Logic (Case 2 fix): Check if this is a temp URI but file is actually downloaded
+        Uri finalUri = uri;
+        String finalPath = path;
+        
+        // If the URI is NOT local (e.g., Gmail temp provider), try to find a local match
+        if (!FileUtils.isLocalFile(this, uri)) {
+            long fileSize = FileUtils.getFileSize(this, uri);
+            Uri localMatch = FileUtils.findLocalFileMatch(this, name, fileSize);
+            
+            if (localMatch != null) {
+                // Found a local file that matches! Use it instead
+                finalUri = localMatch;
+                finalPath = localMatch.getPath();
+            }
+        }
 
         // Add to recents
         // Open
-        RecentFile recentFile = new RecentFile(name, uri.toString(), type);
+        RecentFile recentFile = new RecentFile(name, finalUri.toString(), type, finalPath);
         openFileViewer(recentFile);
     }
 
     private void openFileViewer(RecentFile file) {
+        // Fast check before opening (with path fallback for Case 3)
+        Uri uri = Uri.parse(file.getUriString());
+        FileUtils.FileStatus status = FileUtils.checkFileStatusWithPath(this, uri, file.getPath());
+        
+        if (status == FileUtils.FileStatus.NOT_FOUND) {
+            Toast.makeText(this, "File not found during open check", Toast.LENGTH_SHORT).show();
+            RecentFilesManager.getInstance(this).removeRecentFile(file);
+            loadRecentFiles();
+            return;
+        }
+
         // Update Recents (move to top / update timestamp)
         // Re-create to update timestamp
-        RecentFile updatedFile = new RecentFile(file.getName(), file.getUriString(), file.getType());
+        RecentFile updatedFile = new RecentFile(file.getName(), file.getUriString(), file.getType(), file.getPath());
         RecentFilesManager.getInstance(this).addRecentFile(updatedFile);
         loadRecentFiles();
 
         // Toast.makeText(this, "Opening " + file.getName(), Toast.LENGTH_SHORT).show();
         
-        Uri uri = Uri.parse(file.getUriString());
+
         String type = file.getType();
         
         Intent intent = null;
@@ -261,7 +317,33 @@ public class MainActivity extends AppCompatActivity {
             intent.setData(uri);
             // We need to grant read permission to the target activity
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
+            try {
+                startActivity(intent);
+            } catch (SecurityException e) {
+                // Try Fallback with Path if available
+                boolean fallbackSuccess = false;
+                if (file.getPath() != null) {
+                    try {
+                        java.io.File f = new java.io.File(file.getPath());
+                        if (f.exists()) {
+                            Uri fileUri = Uri.fromFile(f);
+                            intent.setData(fileUri);
+                            // File URI doesn't need grant flags usually if we have permission, but keep simple
+                            startActivity(intent);
+                            fallbackSuccess = true;
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                
+                if (!fallbackSuccess) {
+                    Toast.makeText(this, "Permission lost. Please re-open file from Files app.", Toast.LENGTH_LONG).show();
+                    // Do NOT remove. User knows it exists.
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, "Could not open file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -482,4 +564,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+
+    private void checkAllFilesPermission() {
+        if (Environment.isExternalStorageManager()) {
+            return;
+        }
+
+        if (isPermissionDialogShowing) {
+             return;
+        }
+
+        isPermissionDialogShowing = true;
+        
+        new AlertDialog.Builder(this)
+            .setTitle("All Files Access Required")
+            .setMessage("To ensure your recent files list works correctly and files don't disappear, this app needs 'All Files Access' permission. Please grant it in the next screen.")
+            .setPositiveButton("Grant", (dialog, which) -> {
+                isPermissionDialogShowing = false;
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addCategory("android.intent.category.DEFAULT");
+                    intent.setData(Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    startActivity(intent);
+                }
+            })
+            .setNegativeButton("Cancel", (dialog, which) -> {
+                 isPermissionDialogShowing = false;
+            })
+            .setOnDismissListener(dialog -> {
+                 isPermissionDialogShowing = false;
+            })
+            .show();
+    }
 }

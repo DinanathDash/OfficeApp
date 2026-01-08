@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import com.dinanathdash.officeapp.utils.ViewUtils;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -85,6 +86,7 @@ public class PptActivity extends AppCompatActivity {
         // Standard RecyclerView behavior (nested scrolling enabled by default)
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ViewUtils.applyBottomWindowInsets(recyclerView);
         adapter = new SlidesAdapter(Collections.emptyList());
         adapter.setHighlightColors(
             androidx.core.content.ContextCompat.getColor(this, R.color.ppt_highlight),
@@ -434,7 +436,12 @@ public class PptActivity extends AppCompatActivity {
                   final int finalFoundIndex = foundIndex;
                   
                   // Standard RecyclerView scrolling is sufficient now
-                  recyclerView.scrollToPosition(finalFoundIndex);
+                  RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+                  if (layoutManager instanceof LinearLayoutManager) {
+                      ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalFoundIndex, 0); // Scroll to top (offset 0)
+                  } else {
+                      recyclerView.scrollToPosition(finalFoundIndex);
+                  }
                  
                  Toast.makeText(this, "Match found on slide " + (foundIndex + 1), Toast.LENGTH_SHORT).show();
              

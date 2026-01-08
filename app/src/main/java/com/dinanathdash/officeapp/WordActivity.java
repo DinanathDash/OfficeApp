@@ -49,6 +49,7 @@ public class WordActivity extends AppCompatActivity {
         com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
 
         webView = findViewById(R.id.webView);
+        com.dinanathdash.officeapp.utils.ViewUtils.applyBottomWindowInsets(webView);
         
         // Configure WebView
         if (webView != null) {
@@ -209,7 +210,7 @@ public class WordActivity extends AppCompatActivity {
                           .append("  var matches = document.querySelectorAll('.search-highlight');\n")
                           .append("  if (matches.length > 0) {\n")
                           .append("    matches[0].classList.add('search-highlight-active');\n")
-                          .append("    matches[0].scrollIntoView({behavior: 'smooth', block: 'center'});\n")
+                          .append("    matches[0].scrollIntoView({behavior: 'smooth', block: 'start'});\n")
                           .append("  }\n")
                           .append("  return matches.length;\n")
                           .append("}")
@@ -225,7 +226,7 @@ public class WordActivity extends AppCompatActivity {
                           .append("  if (currentMatchIndex >= matches.length) currentMatchIndex = 0;")
                           .append("  if (currentMatchIndex < 0) currentMatchIndex = matches.length - 1;")
                           .append("  matches[currentMatchIndex].classList.add('search-highlight-active');")
-                          .append("  matches[currentMatchIndex].scrollIntoView({behavior: 'smooth', block: 'center'});")
+                          .append("  matches[currentMatchIndex].scrollIntoView({behavior: 'smooth', block: 'start'});")
                           .append("}")
                           .append("</script>")
                           .append("</head><body>");

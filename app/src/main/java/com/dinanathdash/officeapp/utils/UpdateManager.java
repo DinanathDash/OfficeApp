@@ -39,14 +39,22 @@ public class UpdateManager {
     }
 
     public void checkForUpdates() {
-        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_checking_updates, null);
+        checkForUpdates(false);
+    }
 
-        AlertDialog progressDialog = new MaterialAlertDialogBuilder(context)
-                .setView(dialogView)
-                .setCancelable(false)
-                .create();
+    public void checkForUpdates(boolean isSilent) {
+        AlertDialog progressDialog = null;
         
-        progressDialog.show();
+        if (!isSilent) {
+            View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_checking_updates, null);
+            progressDialog = new MaterialAlertDialogBuilder(context)
+                    .setView(dialogView)
+                    .setCancelable(false)
+                    .create();
+            progressDialog.show();
+        }
+
+        final AlertDialog finalProgressDialog = progressDialog;
 
         executor.execute(() -> {
             try {
@@ -72,31 +80,45 @@ public class UpdateManager {
                     String body = jsonObject.optString("body", "");
 
                     handler.post(() -> {
-                        progressDialog.dismiss();
-                        handleUpdateResponse(tagName, htmlUrl, body);
+                        if (finalProgressDialog != null) {
+                            finalProgressDialog.dismiss();
+                        }
+                        handleUpdateResponse(tagName, htmlUrl, body, isSilent);
                     });
                 } else if (responseCode == 404) {
                     handler.post(() -> {
-                        progressDialog.dismiss();
-                        Toast.makeText(context, "No updates available", Toast.LENGTH_SHORT).show();
+                        if (finalProgressDialog != null) {
+                            finalProgressDialog.dismiss();
+                        }
+                        if (!isSilent) {
+                            Toast.makeText(context, "No updates available", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 } else {
                     handler.post(() -> {
-                        progressDialog.dismiss();
-                        Toast.makeText(context, "Failed to check for updates (Code: " + responseCode + ")", Toast.LENGTH_SHORT).show();
+                        if (finalProgressDialog != null) {
+                            finalProgressDialog.dismiss();
+                        }
+                        if (!isSilent) {
+                            Toast.makeText(context, "Failed to check for updates (Code: " + responseCode + ")", Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 handler.post(() -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(context, "Error checking for updates: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                    if (finalProgressDialog != null) {
+                        finalProgressDialog.dismiss();
+                    }
+                    if (!isSilent) {
+                        Toast.makeText(context, "Error checking for updates: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
         });
     }
 
-    private void handleUpdateResponse(String latestVersionTag, String downloadUrl, String notes) {
+    private void handleUpdateResponse(String latestVersionTag, String downloadUrl, String notes, boolean isSilent) {
         String currentVersion = BuildConfig.VERSION_NAME;
         
         // Simple comparison: if strings are different, assume update (or strictly if not equal)
@@ -108,7 +130,9 @@ public class UpdateManager {
         if (!cleanLatest.equals(cleanCurrent)) {
              showUpdateDialog(latestVersionTag, downloadUrl, notes);
         } else {
-            Toast.makeText(context, "App is up to date (" + currentVersion + ")", Toast.LENGTH_SHORT).show();
+            if (!isSilent) {
+                Toast.makeText(context, "App is up to date (" + currentVersion + ")", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

@@ -5,12 +5,19 @@ public class RecentFile {
     private String uriString;
     private long timestamp;
     private String type;
+    private String path;
 
-    public RecentFile(String name, String uriString, String type) {
+    public RecentFile(String name, String uriString, String type, String path) {
         this.name = name;
         this.uriString = uriString;
         this.type = type;
+        this.path = path;
         this.timestamp = System.currentTimeMillis();
+    }
+    
+    // Legacy constructor for backward compatibility if needed, using null path
+    public RecentFile(String name, String uriString, String type) {
+        this(name, uriString, type, null);
     }
 
     public String getName() {
@@ -27,5 +34,9 @@ public class RecentFile {
 
     public String getType() {
         return type;
+    }
+    
+    public String getPath() {
+        return path;
     }
 }

@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import com.dinanathdash.officeapp.utils.ViewUtils;
+import java.io.File;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -72,6 +74,7 @@ public class PdfActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ViewUtils.applyBottomWindowInsets(recyclerView);
         
         progressBar = findViewById(R.id.progressBar);
         if (progressBar != null) {
