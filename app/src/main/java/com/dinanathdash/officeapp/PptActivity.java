@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.dinanathdash.officeapp.utils.ViewUtils;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -62,6 +62,12 @@ public class PptActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        androidx.activity.EdgeToEdge.enable(this);
+        
+        // Configure light status bar icons for colored toolbar
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+            .setAppearanceLightStatusBars(false);
+        
         setContentView(R.layout.activity_ppt);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -86,7 +92,9 @@ public class PptActivity extends AppCompatActivity {
         // Standard RecyclerView behavior (nested scrolling enabled by default)
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        ViewUtils.applyBottomWindowInsets(recyclerView);
+        // Setup bottom navigation spacer
+        View bottomSpacer = findViewById(R.id.bottomNavSpacer);
+        com.dinanathdash.officeapp.utils.BottomNavHelper.setupBottomSpacer(bottomSpacer);
         adapter = new SlidesAdapter(Collections.emptyList());
         adapter.setHighlightColors(
             androidx.core.content.ContextCompat.getColor(this, R.color.ppt_highlight),
@@ -154,10 +162,6 @@ public class PptActivity extends AppCompatActivity {
                 adapter.updateList(slides);
                 progressBar.setVisibility(View.GONE);
                 updateSubtitle(slides.size());
-                
-                ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
-                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                recyclerView.setLayoutParams(params);
             });
         });
     }

@@ -40,7 +40,7 @@
         android:id="@+id/zoomLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavSpacer"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout">
 
         <TextView
@@ -53,5 +53,15 @@
             android:textIsSelectable="true"
             android:fontFamily="monospace" />
     </com.dinanathdash.officeapp.ui.ZoomLayout>
+
+    <!-- Bottom Navigation Bar Spacer -->
+    <View
+        android:id="@+id/bottomNavSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

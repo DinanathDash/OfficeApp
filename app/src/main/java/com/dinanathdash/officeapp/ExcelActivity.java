@@ -92,6 +92,12 @@ public class ExcelActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        androidx.activity.EdgeToEdge.enable(this);
+        
+        // Configure light status bar icons for colored toolbar
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+            .setAppearanceLightStatusBars(false);
+        
         setContentView(R.layout.activity_excel);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -114,7 +120,10 @@ public class ExcelActivity extends AppCompatActivity {
 
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_BOTH);
-        com.dinanathdash.officeapp.utils.ViewUtils.applyBottomWindowInsets(zoomLayout);
+        
+        // Setup bottom navigation spacer
+        View bottomSpacer = findViewById(R.id.bottomNavSpacer);
+        com.dinanathdash.officeapp.utils.BottomNavHelper.setupBottomSpacer(bottomSpacer);
         
 
         

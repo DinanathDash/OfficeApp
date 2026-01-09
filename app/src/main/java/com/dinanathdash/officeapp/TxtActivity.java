@@ -7,7 +7,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.dinanathdash.officeapp.utils.ViewUtils;
+
 
 import com.dinanathdash.officeapp.utils.FileUtils;
 
@@ -32,6 +32,7 @@ public class TxtActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        androidx.activity.EdgeToEdge.enable(this);
         setContentView(R.layout.activity_txt);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -56,7 +57,10 @@ public class TxtActivity extends AppCompatActivity {
         zoomLayout = findViewById(R.id.zoomLayout);
         zoomLayout.setMeasureMode(com.dinanathdash.officeapp.ui.ZoomLayout.MeasureMode.UNBOUNDED_VERTICAL); // Vertical scroll, width constrained for wrap
         zoomLayout.setScrollableAtScaleOne(true); // Handle scrolling ourselves
-        ViewUtils.applyBottomWindowInsets(zoomLayout);
+        
+        // Setup bottom navigation spacer
+        android.view.View bottomSpacer = findViewById(R.id.bottomNavSpacer);
+        com.dinanathdash.officeapp.utils.BottomNavHelper.setupBottomSpacer(bottomSpacer);
         
 
 

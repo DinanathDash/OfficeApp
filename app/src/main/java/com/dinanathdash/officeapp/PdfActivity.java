@@ -3,6 +3,7 @@ package com.dinanathdash.officeapp;
 import android.content.Context;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
+import android.view.View;
 import android.view.ViewGroup;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -10,7 +11,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import com.dinanathdash.officeapp.utils.ViewUtils;
+
 import java.io.File;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -60,6 +61,7 @@ public class PdfActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        androidx.activity.EdgeToEdge.enable(this);
         setContentView(R.layout.activity_pdf);
         
         PDFBoxResourceLoader.init(getApplicationContext());
@@ -74,7 +76,9 @@ public class PdfActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        ViewUtils.applyBottomWindowInsets(recyclerView);
+        // Setup bottom navigation spacer
+        View bottomSpacer = findViewById(R.id.bottomNavSpacer);
+        com.dinanathdash.officeapp.utils.BottomNavHelper.setupBottomSpacer(bottomSpacer);
         
         progressBar = findViewById(R.id.progressBar);
         if (progressBar != null) {
@@ -112,16 +116,6 @@ public class PdfActivity extends AppCompatActivity {
             adapter = new PdfPageAdapter(pdfRenderer);
             adapter.setOnPageLongClickListener(this::showPageTextDialog);
             recyclerView.setAdapter(adapter);
-
-            if (pdfRenderer.getPageCount() == 1) {
-                ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
-                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                recyclerView.setLayoutParams(params);
-            } else {
-                 ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
-                params.height = ViewGroup.LayoutParams.MATCH_PARENT; 
-                recyclerView.setLayoutParams(params);
-            }
             
             // Initialize Global Zoom
             globalZoomHelper = new com.dinanathdash.officeapp.ui.GlobalZoomHelper(this, recyclerView, adapter);

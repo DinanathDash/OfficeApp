@@ -57,9 +57,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         
         // Window Insets
+        // Window Insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0); // No bottom padding regarding system bars for root
+            return insets;
+        });
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.nestedScrollView), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            int bottomPadding = (int) (24 * v.getResources().getDisplayMetrics().density);
+            v.setPadding(0, 0, 0, systemBars.bottom + bottomPadding); 
+            return insets;
+        });
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fabOpen), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            android.view.ViewGroup.MarginLayoutParams params = (android.view.ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            // 24dp (original margin) + bottom inset
+            int originalMargin = (int) (24 * getResources().getDisplayMetrics().density);
+            params.bottomMargin = originalMargin + systemBars.bottom;
+            v.setLayoutParams(params);
             return insets;
         });
 

@@ -30,6 +30,12 @@ public class WordActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        androidx.activity.EdgeToEdge.enable(this);
+        
+        // Configure light status bar icons for colored toolbar
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+            .setAppearanceLightStatusBars(false);
+        
         setContentView(R.layout.activity_word);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -49,7 +55,10 @@ public class WordActivity extends AppCompatActivity {
         com.dinanathdash.officeapp.utils.LoaderUtils.applyThemeColors(progressBar, primaryColor);
 
         webView = findViewById(R.id.webView);
-        com.dinanathdash.officeapp.utils.ViewUtils.applyBottomWindowInsets(webView);
+        
+        // Setup bottom navigation spacer
+        View bottomSpacer = findViewById(R.id.bottomNavSpacer);
+        com.dinanathdash.officeapp.utils.BottomNavHelper.setupBottomSpacer(bottomSpacer);
         
         // Configure WebView
         if (webView != null) {
