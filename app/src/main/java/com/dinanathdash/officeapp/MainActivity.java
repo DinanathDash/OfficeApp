@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        checkAllFilesPermission();
+        checkPermissions();
         loadRecentFiles();
 
     }
@@ -584,22 +584,73 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private void checkAllFilesPermission() {
-        if (Environment.isExternalStorageManager()) {
+    private AlertDialog onboardingDialog;
+
+    private void checkPermissions() {
+        boolean isStorageGranted = Environment.isExternalStorageManager();
+        boolean isInstallGranted = getPackageManager().canRequestPackageInstalls();
+
+        if (isStorageGranted && isInstallGranted) {
+            if (onboardingDialog != null && onboardingDialog.isShowing()) {
+                onboardingDialog.dismiss();
+            }
             return;
         }
 
-        if (isPermissionDialogShowing) {
-             return;
+        showOnboardingDialog(isStorageGranted, isInstallGranted);
+    }
+
+    private void showOnboardingDialog(boolean isStorageGranted, boolean isInstallGranted) {
+        if (onboardingDialog != null && onboardingDialog.isShowing()) {
+            updateOnboardingDialogUI(isStorageGranted, isInstallGranted);
+            return;
         }
 
-        isPermissionDialogShowing = true;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_permission_onboarding, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false); // Mandatory
+
+        onboardingDialog = builder.create();
+        // Transparent background for the card view to look right
+        if (onboardingDialog.getWindow() != null) {
+            onboardingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        // Initialize UI
+        updateOnboardingUI(dialogView, isStorageGranted, isInstallGranted);
+
+        onboardingDialog.show();
+    }
+
+    private void updateOnboardingDialogUI(boolean isStorageGranted, boolean isInstallGranted) {
+        if (onboardingDialog == null) return;
+        // In case the dialog view needs to be refreshed
+        // Since we are not re-inflating, we just update the existing view
+        // But we need reference to the view. 
+        // AlertDialog doesn't expose getView() easily unless we keep it or find by id window
+        // Better to just update if we can access the view elements, but simpler to just re-bind if we kept reference
+        // OR better: Just findViewById on the dialog itself
         
-        new AlertDialog.Builder(this)
-            .setTitle("All Files Access Required")
-            .setMessage("To ensure your recent files list works correctly and files don't disappear, this app needs 'All Files Access' permission. Please grant it in the next screen.")
-            .setPositiveButton("Grant", (dialog, which) -> {
-                isPermissionDialogShowing = false;
+        updateOnboardingUI(onboardingDialog.findViewById(android.R.id.content), isStorageGranted, isInstallGranted);
+    }
+    
+    private void updateOnboardingUI(View root, boolean isStorageGranted, boolean isInstallGranted) {
+        if (root == null) return;
+
+        View btnGrantStorage = root.findViewById(R.id.btnGrantStorage);
+        View imgCheckStorage = root.findViewById(R.id.imgCheckStorage);
+        View btnGrantInstall = root.findViewById(R.id.btnGrantInstall);
+        View imgCheckInstall = root.findViewById(R.id.imgCheckInstall);
+
+        // Storage State
+        if (isStorageGranted) {
+            btnGrantStorage.setVisibility(View.GONE);
+            imgCheckStorage.setVisibility(View.VISIBLE);
+        } else {
+            btnGrantStorage.setVisibility(View.VISIBLE);
+            imgCheckStorage.setVisibility(View.GONE);
+            btnGrantStorage.setOnClickListener(v -> {
                 try {
                     Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                     intent.addCategory("android.intent.category.DEFAULT");
@@ -610,13 +661,30 @@ public class MainActivity extends AppCompatActivity {
                     intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
                     startActivity(intent);
                 }
-            })
-            .setNegativeButton("Cancel", (dialog, which) -> {
-                 isPermissionDialogShowing = false;
-            })
-            .setOnDismissListener(dialog -> {
-                 isPermissionDialogShowing = false;
-            })
-            .show();
+            });
+        }
+
+        // Install State
+        if (isInstallGranted) {
+            btnGrantInstall.setVisibility(View.GONE);
+            imgCheckInstall.setVisibility(View.VISIBLE);
+        } else {
+            btnGrantInstall.setVisibility(View.VISIBLE);
+            imgCheckInstall.setVisibility(View.GONE);
+            // Optional: Disable install grant until storage is granted? 
+            // User requested "one by one", but didn't strictly say sequential enforcement.
+            // But let's keep them independent as requested "click on access to one by one".
+            
+            btnGrantInstall.setOnClickListener(v -> {
+                 try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                    intent.setData(Uri.parse(String.format("package:%s", getPackageName())));
+                    startActivity(intent);
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                     Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show();
+                 }
+            });
+        }
     }
 }

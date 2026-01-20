@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="20dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@android:color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="App Setup"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:includeFontPadding="false"
+                android:layout_marginBottom="2dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="The following permissions are required for the app to function correctly."
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:includeFontPadding="false"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Permission 1: Storage -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_folder"
+                    app:tint="@color/primary_blue"
+                    android:layout_marginEnd="16dp"
+                    android:contentDescription="Folder Icon"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Storage Access"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:includeFontPadding="false"
+                        android:textColor="@android:color/black"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="To save and manage files"
+                        android:textSize="12sp"
+                        android:includeFontPadding="false"
+                        android:textColor="#757575"/>
+                </LinearLayout>
+
+                <!-- Status: Grant Button OR Check Icon -->
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGrantStorage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+                    android:text="Allow"
+                    android:textColor="@color/primary_blue"
+                    android:minWidth="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:includeFontPadding="false"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"/>
+
+                <ImageView
+                    android:id="@+id/imgCheckStorage"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_check"
+                    app:tint="#4CAF50"
+                    android:visibility="gone"
+                    android:layout_gravity="center"/>
+            </FrameLayout>
+
+        </LinearLayout>
+        
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE"
+            android:layout_marginVertical="4dp"/>
+
+        <!-- Permission 2: Install -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_install"
+                app:tint="@color/primary_blue"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="Install Icon"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Install Updates"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false"
+                    android:textColor="@android:color/black"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="To seamlessly update app"
+                    android:textSize="12sp"
+                    android:includeFontPadding="false"
+                    android:textColor="#757575"/>
+            </LinearLayout>
+
+            <!-- Status: Grant Button OR Check Icon -->
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGrantInstall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                   style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+                    android:text="Allow"
+                    android:textColor="@color/primary_blue"
+                    android:minWidth="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:includeFontPadding="false"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"/>
+
+                    <ImageView
+                        android:id="@+id/imgCheckInstall"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_check"
+                        app:tint="#4CAF50"
+                        android:visibility="gone"
+                        android:layout_gravity="center"/>
+                </FrameLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>
