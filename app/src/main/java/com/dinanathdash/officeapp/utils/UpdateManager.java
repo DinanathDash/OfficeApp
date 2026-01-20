@@ -1,6 +1,7 @@
 package com.dinanathdash.officeapp.utils;
 
 import android.content.Context;
+import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
@@ -76,54 +77,56 @@ public class UpdateManager {
 
                     JSONObject jsonObject = new JSONObject(response.toString());
                     String tagName = jsonObject.optString("tag_name", "");
-                    String htmlUrl = jsonObject.optString("html_url", "");
                     String body = jsonObject.optString("body", "");
+                    
+                    // Find APK asset
+                    String downloadUrl = "";
+                    if (jsonObject.has("assets")) {
+                        org.json.JSONArray assets = jsonObject.getJSONArray("assets");
+                        for (int i = 0; i < assets.length(); i++) {
+                            JSONObject asset = assets.getJSONObject(i);
+                            if (asset.optString("name", "").toLowerCase().endsWith(".apk")) {
+                                downloadUrl = asset.optString("browser_download_url", "");
+                                break;
+                            }
+                        }
+                    }
 
+                    // If no apk found, fallback to html_url (browser update)
+                    if (downloadUrl.isEmpty()) {
+                        downloadUrl = jsonObject.optString("html_url", "");
+                    }
+                    
+                    String finalDownloadUrl = downloadUrl;
                     handler.post(() -> {
                         if (finalProgressDialog != null) {
                             finalProgressDialog.dismiss();
                         }
-                        handleUpdateResponse(tagName, htmlUrl, body, isSilent);
-                    });
-                } else if (responseCode == 404) {
-                    handler.post(() -> {
-                        if (finalProgressDialog != null) {
-                            finalProgressDialog.dismiss();
-                        }
-                        if (!isSilent) {
-                            Toast.makeText(context, "No updates available", Toast.LENGTH_SHORT).show();
-                        }
+                        handleUpdateResponse(tagName, finalDownloadUrl, body, isSilent);
                     });
                 } else {
-                    handler.post(() -> {
-                        if (finalProgressDialog != null) {
-                            finalProgressDialog.dismiss();
-                        }
-                        if (!isSilent) {
-                            Toast.makeText(context, "Failed to check for updates (Code: " + responseCode + ")", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    handleError(finalProgressDialog, isSilent, "Code: " + responseCode);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                handler.post(() -> {
-                    if (finalProgressDialog != null) {
-                        finalProgressDialog.dismiss();
-                    }
-                    if (!isSilent) {
-                        Toast.makeText(context, "Error checking for updates: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+                handleError(finalProgressDialog, isSilent, e.getLocalizedMessage());
+            }
+        });
+    }
+
+    private void handleError(AlertDialog dialog, boolean isSilent, String message) {
+        handler.post(() -> {
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+            if (!isSilent) {
+                Toast.makeText(context, "Error checking for updates: " + message, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void handleUpdateResponse(String latestVersionTag, String downloadUrl, String notes, boolean isSilent) {
         String currentVersion = BuildConfig.VERSION_NAME;
-        
-        // Simple comparison: if strings are different, assume update (or strictly if not equal)
-        // Ideally should parse semantic versioning, but inequality is safe enough for "New Version Available"
-        // Removing 'v' prefix if present for comparison might be safer
         String cleanLatest = latestVersionTag.replace("v", "");
         String cleanCurrent = currentVersion.replace("v", "");
 
@@ -141,16 +144,79 @@ public class UpdateManager {
             UpdateBottomSheetFragment.newInstance(version, url, notes)
                     .show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), "UpdateDialog");
         } else {
-            // Fallback for non-AppCompatActivity contexts (unlikely in this app but safe)
             new MaterialAlertDialogBuilder(context)
                 .setTitle("Update Available")
                 .setMessage("A new version " + version + " is available.\n\n" + notes)
                 .setPositiveButton("Update", (dialog, which) -> {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    context.startActivity(intent);
+                    downloadAndInstall(context, url, version);
                 })
                 .setNegativeButton("Later", null)
                 .show();
+        }
+    }
+    
+    public static void downloadAndInstall(Context context, String url, String version) {
+        // If regular URL (not apk), open in browser
+        if (!url.endsWith(".apk")) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            context.startActivity(intent);
+            return;
+        }
+
+        Toast.makeText(context, "Downloading update...", Toast.LENGTH_SHORT).show();
+
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+        request.setTitle("App Update " + version);
+        request.setDescription("Downloading " + version + "...");
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        String fileName = "officeapp_update_" + version + ".apk";
+        
+        // Use external public dir to ensure readability
+        request.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+        request.setMimeType("application/vnd.android.package-archive");
+
+        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        long downloadId = downloadManager.enqueue(request);
+
+        // Register receiver for completion
+        android.content.BroadcastReceiver onComplete = new android.content.BroadcastReceiver() {
+            @Override
+            public void onReceive(Context ctxt, Intent intent) {
+                long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                if (id == downloadId) {
+                    installApk(ctxt, downloadId);
+                    try {
+                        ctxt.unregisterReceiver(this);
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+            }
+        };
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(onComplete, new android.content.IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(onComplete, new android.content.IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        }
+    }
+
+    private static void installApk(Context context, long downloadId) {
+        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        Uri uri = downloadManager.getUriForDownloadedFile(downloadId);
+
+        if (uri != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/vnd.android.package-archive");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            
+            try {
+                context.startActivity(intent);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(context, "Installation failed. Please open Downloads folder and install manually.", Toast.LENGTH_LONG).show();
+            }
         }
     }
 }

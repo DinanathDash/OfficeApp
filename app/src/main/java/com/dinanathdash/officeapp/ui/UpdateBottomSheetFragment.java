@@ -82,8 +82,7 @@ public class UpdateBottomSheetFragment extends BottomSheetDialogFragment {
         tvReleaseNotes.setText(notes);
 
         btnUpdate.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            startActivity(intent);
+            com.dinanathdash.officeapp.utils.UpdateManager.downloadAndInstall(getContext(), url, version);
             dismiss();
         });
 
