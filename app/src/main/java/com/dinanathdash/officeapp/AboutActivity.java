@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.dinanathdash.officeapp.ui.TextBottomSheetFragment;
+import com.dinanathdash.officeapp.ui.DeveloperInfoFragment;
 import com.dinanathdash.officeapp.utils.UpdateManager;
 
 public class AboutActivity extends AppCompatActivity {
@@ -29,6 +30,7 @@ public class AboutActivity extends AppCompatActivity {
         View btnUpdate = findViewById(R.id.btnUpdate);
         View btnPrivacy = findViewById(R.id.btnPrivacy);
         View btnLicense = findViewById(R.id.btnLicense);
+        View btnAboutDeveloper = findViewById(R.id.btnAboutDeveloper);
 
         // Set Version
         try {
@@ -55,6 +57,10 @@ public class AboutActivity extends AppCompatActivity {
         btnLicense.setOnClickListener(v -> {
              TextBottomSheetFragment.newInstance(getString(R.string.action_license), getString(R.string.license_text) + "<br/><br/>" + getString(R.string.open_source_licenses_text))
                     .show(getSupportFragmentManager(), "LicenseDialog");
+        });
+
+        btnAboutDeveloper.setOnClickListener(v -> {
+            DeveloperInfoFragment.newInstance().show(getSupportFragmentManager(), "DeveloperInfoDialog");
         });
     }
 }

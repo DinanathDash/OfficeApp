@@ -5,6 +5,7 @@
     <string name="action_update">Update</string>
     <string name="action_privacy">Privacy and Legal</string>
     <string name="action_license">Open-source License</string>
+    <string name="action_about_developer">About Developer</string>
     <string name="dialog_edit_name_title">Edit Name</string>
     <string name="dialog_edit_name_hint">Enter your name</string>
     <string name="dialog_action_save">Save</string>
@@ -62,4 +63,24 @@
         https://github.com/material-components/material-components-android
         ]]>
     </string>
+
+    <string name="about_developer_text">
+        <![CDATA[
+        Developed by <b>Dinanath Dash</b>.<br/><br/>
+        A passionate developer creating useful tools for productivity.<br/><br/>
+        <b>Contact:</b><br/>
+        dashdinanath056@gmail.com
+        ]]>
+    </string>
+
+    <string name="developed_by_text">Developed by <b>Dinanath Dash</b></string>
+    <string name="dev_tagline">A passionate developer creating useful tools for productivity.</string>
+    <string name="dev_website_label">Website</string>
+    <string name="dev_github_label">GitHub</string>
+    <string name="dev_contact_label">Contact</string>
+    <string name="dev_footer_text">With ❤️ from India</string>
+    <string name="dev_website_url">https://dverse.framer.website</string>
+    <string name="dev_github_url">https://github.com/dinanathdash</string>
+    <string name="dev_email">dashdinanath056@gmail.com</string>
+    <string name="dev_email_subject">OfficeApp Support</string>
 </resources>

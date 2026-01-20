@@ -126,6 +126,15 @@
                     android:text="@string/action_license"
                     app:drawableStartCompat="@drawable/ic_copyright" />
 
+                <View style="@style/Divider" />
+
+                 <!-- About Developer -->
+                <TextView
+                    android:id="@+id/btnAboutDeveloper"
+                    style="@style/OptionItem"
+                    android:text="@string/action_about_developer"
+                    app:drawableStartCompat="@drawable/ic_developer" />
+
             </LinearLayout>
 
         </LinearLayout>
